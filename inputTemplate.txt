@@ -1,0 +1,4 @@
+nodeQty
+edgeQty
+node1 node2
+...
