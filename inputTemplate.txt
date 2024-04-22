@@ -1,3 +1,4 @@
+true/false (sum of all paths' value between 2 nodes equals 1)
 nodeQty
 edgeQty
 node1 node2

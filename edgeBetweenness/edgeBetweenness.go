@@ -18,12 +18,16 @@ every node has:
 current indegree
 amount of paths
 */
-func EdgeBetweenness(adjList [][]int) *utils.EdgeWeight {
+func EdgeBetweenness(adjList [][]int, divideValue bool) *utils.EdgeWeight {
 	edgeWeight := utils.NewEdgeWeight()
 	for vertex := range adjList {
-		pathDAG, indegree := findPaths(adjList, vertex)
+		pathDAG, indegree, pathsBy := findPaths(adjList, vertex)
 
-		pathsBy := make([]float64, len(adjList))
+		if divideValue {
+			for i, _ := range pathsBy {
+				pathsBy[i] = 1.0
+			}
+		}
 		// get edges with indegree of 0
 		emptyIndegree := make([]int, 0)
 		for i, indegree := range indegree {
@@ -40,7 +44,7 @@ func EdgeBetweenness(adjList [][]int) *utils.EdgeWeight {
 			// fmt.Println(node, ">", pathDAG[node])
 			nodeOutdegree := len(pathDAG[node])
 			for _, parent := range pathDAG[node] {
-				pathWeight := float64(pathsBy[node]+1) / float64(nodeOutdegree)
+				pathWeight := pathsBy[node] / float64(nodeOutdegree)
 				pathsBy[parent] += pathWeight
 				// fmt.Println("pathsBy", parent, pathsBy[parent])
 				edgeWeight.AddWeight(parent, node, pathWeight)
@@ -62,14 +66,16 @@ func EdgeBetweenness(adjList [][]int) *utils.EdgeWeight {
 /*
 Returns a DAG with all the minimum paths to start node ('start' node has outdegree of 0)
 */
-func findPaths(adjList [][]int, start int) ([][]int, []int) {
+func findPaths(adjList [][]int, source int) ([][]int, []int, []float64) {
 	indegree := make([]int, len(adjList))
+	pathsBy := make([]float64, len(adjList))
 	pathDAG := make([][]int, len(adjList))
 
 	level := make([]int, len(adjList))
-	level[start] = 1
+	level[source] = 1
+	pathsBy[source] = 1
 
-	queue := []int{start}
+	queue := []int{source}
 	for len(queue) > 0 {
 		node := queue[0]
 		queue = queue[1:]
@@ -81,8 +87,9 @@ func findPaths(adjList [][]int, start int) ([][]int, []int) {
 			if level[neighbor] == level[node]+1 {
 				pathDAG[neighbor] = append(pathDAG[neighbor], node)
 				indegree[node]++
+				pathsBy[neighbor] += pathsBy[node]
 			}
 		}
 	}
-	return pathDAG, indegree
+	return pathDAG, indegree, pathsBy
 }
