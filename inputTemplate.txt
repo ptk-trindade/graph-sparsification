@@ -1,4 +1,4 @@
-true/false (sum of all paths' value between 2 nodes equals 1)
+effectiveresistance/edgebetweenness_divide/edgebetweenness_sum
 nodeQty
 edgeQty
 node1 node2

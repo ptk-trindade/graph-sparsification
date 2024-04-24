@@ -1,4 +1,4 @@
-true
+effectiveresistance
 5
 5
 0 1
