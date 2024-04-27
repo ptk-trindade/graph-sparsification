@@ -22,7 +22,7 @@ func main() {
 	// 	return
 	// }
 	method := scanner.Text()
-	if method != "effectiveresistance" && method != "edgebetweenness_divide" && method != "edgebetweenness_sum" {
+	if method != "effectiveresistance" && method != "edgebetweenness_divide" && method != "edgebetweenness_sum" && method != "compare" {
 		fmt.Println("Invalid method")
 		return
 	}
@@ -36,11 +36,30 @@ func main() {
 	if method == "effectiveresistance" {
 		edgeWeight := effectiveresisitance.EffectiveResistance(adjList)
 		fmt.Println(edgeWeight)
-		return
+
+	} else if method == "edgebetweenness_sum" || method == "edgebetweenness_divide" {
+		divideValue := (method == "edgebetweenness_divide")
+
+		edgeWeight := edgebetweenness.EdgeBetweenness(adjList, divideValue)
+		fmt.Println(edgeWeight)
+	} else if method == "compare" {
+		edgeWeight := edgebetweenness.EdgeBetweenness(adjList, false)
+		// edgeWeight.Normalize()
+		fmt.Println("sum")
+		edgeWeight.Show()
+
+		edgeWeight = edgebetweenness.EdgeBetweenness(adjList, true)
+		// edgeWeight.Normalize()
+		fmt.Println("divide")
+		edgeWeight.Show()
+
+		edgeWeight = effectiveresisitance.EffectiveResistance(adjList)
+		if edgeWeight == nil {
+			fmt.Println("Error computing effective resistance")
+			return
+		}
+		// edgeWeight.Normalize()
+		fmt.Println("resistance")
+		edgeWeight.Show()
 	}
-
-	divideValue := (method == "edgebetweenness_divide")
-
-	edgeWeight := edgebetweenness.EdgeBetweenness(adjList, divideValue)
-	fmt.Println(edgeWeight)
 }

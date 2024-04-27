@@ -1,0 +1,5 @@
+effectiveresistance/edgebetweenness_divide/edgebetweenness_sum/compare
+nodeQty
+edgeQty
+node1 node2
+...

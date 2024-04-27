@@ -31,7 +31,7 @@ func EffectiveResistance(adjList [][]int) *utils.EdgeWeight {
 			nodeA := i
 			nodeB := adjList[i][j]
 
-			fmt.Println("a-b:", nodeA, nodeB)
+			// fmt.Println("a-b:", nodeA, nodeB)
 			if nodeA > nodeB { // avoid computing edges twice
 				continue
 			}
@@ -41,7 +41,7 @@ func EffectiveResistance(adjList [][]int) *utils.EdgeWeight {
 			c_vals[nodeB] = -1
 
 			c := mat.NewVecDense(len(c_vals), c_vals)
-			fmt.Println("c:", c_vals)
+			// fmt.Println("c:", c_vals)
 
 			var v mat.VecDense
 			v.MulVec(&invLaplacian, c)
@@ -67,6 +67,6 @@ func createLaplaceMatrix(adjList [][]int) mat.Matrix {
 
 	values[0] += 1 // this will make the matrix non-singular, if we suppose voltage at node 0 is 0, adding 1 won't change the result
 	laplacianMatrix := mat.NewDense(len(adjList), len(adjList), values)
-	fmt.Println("Laplacian matrix:", values)
+	// fmt.Println("Laplacian matrix:", values)
 	return laplacianMatrix
 }

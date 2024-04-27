@@ -1,5 +1,0 @@
-effectiveresistance/edgebetweenness_divide/edgebetweenness_sum
-nodeQty
-edgeQty
-node1 node2
-...
