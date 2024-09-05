@@ -1,4 +1,4 @@
-package effectiveresisitance
+package effectiveresistance
 
 import (
 	// "github.com/ptk-trindade/graph-sparsification/effectiveResistance/utils"
@@ -12,9 +12,9 @@ import (
 https://www.universiteitleiden.nl/binaries/content/assets/science/mi/scripties/master/vos_vaya_master.pdf
 Lv = c -> L is the Laplacian matrix, v is the voltage vector and c is the current vector
 */
-func EffectiveResistance(adjList [][]int) *utils.EdgeWeight {
+func EffectiveResistanceComponents(adjList [][]int, componentsRep []int) *utils.EdgeWeight {
 	edgeWeight := utils.NewEdgeWeight()
-	laplacianMatrix := createLaplaceMatrix(adjList)
+	laplacianMatrix := createLaplaceMatrix(adjList, componentsRep)
 
 	// invert the Laplacian matrix
 	var invLaplacian mat.Dense
@@ -54,8 +54,19 @@ func EffectiveResistance(adjList [][]int) *utils.EdgeWeight {
 	return edgeWeight
 }
 
+func EffectiveResistance(adjList [][]int) *utils.EdgeWeight {
+	components := utils.FindComponents(adjList)
+
+	componentsRep := make([]int, len(components))
+	for i, component := range components {
+		componentsRep[i] = component[0] // get one element of each component
+	}
+
+	return EffectiveResistanceComponents(adjList, componentsRep)
+}
+
 // This isn't exactly the Laplacian matrix, we add 1 to the first element of the matrix to make it non-singular
-func createLaplaceMatrix(adjList [][]int) mat.Matrix {
+func createLaplaceMatrix(adjList [][]int, componentsRep []int) mat.Matrix {
 	values := make([]float64, len(adjList)*len(adjList))
 
 	for i := 0; i < len(adjList); i++ {
@@ -65,8 +76,12 @@ func createLaplaceMatrix(adjList [][]int) mat.Matrix {
 		values[i*len(adjList)+i] = float64(len(adjList[i]))
 	}
 
-	values[0] += 1 // this will make the matrix non-singular, if we suppose voltage at node 0 is 0, adding 1 won't change the result
+	// this will make the matrix non-singular, if we suppose voltage at node 'element' is 0, adding 1 won't change the result
+	for i := 0; i < len(componentsRep); i++ {
+		element := componentsRep[i]
+		values[element*len(adjList)+element] += 1 // always in the diagonal
+	}
+
 	laplacianMatrix := mat.NewDense(len(adjList), len(adjList), values)
-	// fmt.Println("Laplacian matrix:", values)
 	return laplacianMatrix
 }

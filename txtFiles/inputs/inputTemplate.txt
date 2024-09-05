@@ -1,4 +1,4 @@
-effectiveresistance/edgebetweenness_divide/edgebetweenness_sum/compare
+effectiveresistance/edgebetweenness_divide/edgebetweenness_sum/compare/test
 nodeQty
 edgeQty
 node1 node2
