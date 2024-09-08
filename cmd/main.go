@@ -21,18 +21,64 @@ func min_(a, b int) int {
 	return b
 }
 
-func main() {
-	// fmt.Println("Start!")
-	// fmt.Println("avgDegree,stdDev,minDegree,maxDegree,components,smallest comp,biggest comp,EBS EBD rs,EBS EBD p-value,EBS EBD jcc,EBD ER rs,EBD ER p-value,EBD ER jcc,EBS ER rs,EBS ER p-value,EBS ER jcc")
+func start() [][]int {
 
 	scanner := bufio.NewScanner(os.Stdin)
 
 	scanner.Scan()
-	// divideValue, err := strconv.ParseBool(scanner.Text())
-	// if err != nil {
-	// 	fmt.Println("Error reading divide value")
-	// 	return
-	// }
+
+	method := scanner.Text()
+	if method != "effectiveresistance" && method != "edgebetweenness_divide" && method != "edgebetweenness_sum" && method != "compare" && method != "test" {
+		// fmt.Println("Invalid method")
+		panic("Invalid method")
+	}
+
+	adjList, err := utils.ReadGraph(scanner)
+	if err != nil {
+		// fmt.Println("Error reading graph")
+		panic("Error reading graph")
+	}
+
+	degrees := make([]int, len(adjList))
+	avgDegree := 0.0
+	for i := range adjList {
+		degrees[i] = len(adjList[i])
+		avgDegree += float64(len(adjList[i]))
+	}
+
+	avgDegree /= float64(len(adjList))
+
+	stdDev := 0.0
+	min := degrees[0]
+	max := degrees[0]
+	for _, d := range degrees {
+		stdDev += (float64(d) - avgDegree) * (float64(d) - avgDegree)
+
+		if d < min {
+			min = d
+		}
+
+		if d > max {
+			max = d
+		}
+	}
+	stdDev = stdDev / float64(len(adjList))
+	stdDev = math.Sqrt(stdDev)
+
+	return adjList
+}
+
+func main() {
+	adjList := start()
+
+}
+
+func mainOld() {
+
+	scanner := bufio.NewScanner(os.Stdin)
+
+	scanner.Scan()
+
 	method := scanner.Text()
 	if method != "effectiveresistance" && method != "edgebetweenness_divide" && method != "edgebetweenness_sum" && method != "compare" && method != "test" {
 		fmt.Println("Invalid method")
