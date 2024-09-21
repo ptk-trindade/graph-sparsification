@@ -70,9 +70,3 @@ func findPaths(adjList [][]int, source int) ([][]int, []int, []float64) {
 	}
 	return pathDAG, foundOrder, minimalPaths
 }
-
-func fillSlice[T any](slice []T, val T) {
-	for i := range slice {
-		slice[i] = val
-	}
-}

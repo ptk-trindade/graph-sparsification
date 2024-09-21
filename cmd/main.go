@@ -9,19 +9,33 @@ import (
 	"sort"
 	"time"
 
-	"github.com/ptk-trindade/graph-sparsification/edgebetweenness"
-	"github.com/ptk-trindade/graph-sparsification/effectiveresistance"
+	// "github.com/ptk-trindade/graph-sparsification/edgebetweenness"
+	// "github.com/ptk-trindade/graph-sparsification/effectiveresistance"
+	"github.com/ptk-trindade/graph-sparsification/nodecentrality"
 	"github.com/ptk-trindade/graph-sparsification/utils"
 )
 
-func min_(a, b int) int {
-	if a < b {
-		return a
+func min[E int|float64](vals ...int) int {
+	minVal := vals[0]
+	for _, val := range vals {
+		if val < minVal {
+			minVal = val
+		}
 	}
-	return b
+	return minVal
 }
 
-func start() [][]int {
+func max[E int|float64](vals ...E) E {
+	maxVal := vals[0]
+	for _, val := range vals {
+		if val > maxVal {
+			maxVal = val
+		}
+	}
+	return maxVal
+}
+
+func start(calculateMetrics bool) [][]int {
 
 	scanner := bufio.NewScanner(os.Stdin)
 
@@ -39,37 +53,69 @@ func start() [][]int {
 		panic("Error reading graph")
 	}
 
-	degrees := make([]int, len(adjList))
-	avgDegree := 0.0
-	for i := range adjList {
-		degrees[i] = len(adjList[i])
-		avgDegree += float64(len(adjList[i]))
-	}
-
-	avgDegree /= float64(len(adjList))
-
-	stdDev := 0.0
-	min := degrees[0]
-	max := degrees[0]
-	for _, d := range degrees {
-		stdDev += (float64(d) - avgDegree) * (float64(d) - avgDegree)
-
-		if d < min {
-			min = d
+	if calculateMetrics {
+		degrees := make([]int, len(adjList))
+		avgDegree := 0.0
+		for i := range adjList {
+			degrees[i] = len(adjList[i])
+			avgDegree += float64(len(adjList[i]))
+		}
+	
+		avgDegree /= float64(len(adjList))
+	
+		stdDev := 0.0
+		minDegree := degrees[0]
+		maxDegree := degrees[0]
+		for _, d := range degrees {
+			tmp := (float64(d) - avgDegree)
+			stdDev += tmp*tmp
+			
+			minDegree = min(minDegree, d)
+			maxDegree= max(maxDegree, d)
 		}
 
-		if d > max {
-			max = d
-		}
+		stdDev = stdDev / float64(len(adjList))
+		stdDev = math.Sqrt(stdDev)
+
+		fmt.Println(minDegree, avgDegree, maxDegree)
 	}
-	stdDev = stdDev / float64(len(adjList))
-	stdDev = math.Sqrt(stdDev)
 
 	return adjList
 }
 
 func main() {
-	adjList := start()
+	adjList := start(false)
+
+	test1(adjList)
+}
+
+func test1(adjList [][]int) {
+	
+	realCentrality := nodecentrality.NodeCentrality(adjList)
+	mins, avgs, maxs := nodecentrality.ApproximateNodeCentrality(adjList)
+
+	// since the Jaccard function will consider the bigger values 
+	// and I'm interested in the lower ones, I must invert the values
+	for i := range avgs {
+		avgs[i] = 1/avgs[i]
+		maxs[i] = 1/maxs[i]
+	}
+
+	percentages := []float64{0.01, 0.05, 0.1}
+	for _, p := range percentages {
+		fmt.Printf("Percentage: %f", p)
+
+		realMin := CompareJaccard(realCentrality, mins, p)
+		realAvg := CompareJaccard(realCentrality, avgs, p)
+		realMax := CompareJaccard(realCentrality, maxs, p)
+
+		minAvg := CompareJaccard(mins, avgs, p)
+		minMax := CompareJaccard(mins, maxs, p)
+
+		avgMax := CompareJaccard(avgs, maxs, p)
+
+		fmt.Printf("realMin %.6f\n realAvg %.6f\n realMax %.6f\n minAvg %.6f\n minMax %.6f\n avgMax %.6f\n", realMin, realAvg, realMax, minAvg, minMax, avgMax)
+	}
 
 }
 
