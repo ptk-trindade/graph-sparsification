@@ -9,9 +9,10 @@ import (
 
 func ReadGraph(scanner *bufio.Scanner) ([][]int, error) {
 	scanner.Scan()
-	nodeQty, err := strconv.Atoi(scanner.Text())
+	nodeQtyStr := scanner.Text()
+	nodeQty, err := strconv.Atoi(nodeQtyStr)
 	if err != nil {
-		fmt.Println("Error reading node quantity")
+		fmt.Println("Error reading node quantity", nodeQtyStr)
 		return nil, err
 	}
 

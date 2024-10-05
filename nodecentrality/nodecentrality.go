@@ -2,10 +2,53 @@ package nodecentrality
 
 import (
 	"fmt"
+	"math"
+
+	"github.com/ptk-trindade/graph-sparsification/utils"
 )
 
-func NodeCentrality(adjList [][]int) []float64 {
-	nodeCentrality := make([]float64, len(adjList))
+func NodeClosenessAndEccentricity(adjList [][]int) ([]float64, []int) {
+	nodeCloseness := make([]float64, len(adjList))
+	nodeEccentricity := make([]int, len(adjList))
+
+	for vertex := range adjList {
+		levels := bfs(adjList, vertex)
+
+		nodeCloseness[vertex] = utils.Avg(levels...)
+		nodeEccentricity[vertex] = utils.Max(levels...)
+	}
+
+	return nodeCloseness, nodeEccentricity
+}
+
+func NodeEccentricity(adjList [][]int) []int {
+	nodeEccentricity := make([]int, len(adjList))
+
+	for vertex := range adjList {
+		levels := bfs(adjList, vertex)
+
+		nodeEccentricity[vertex] = utils.Max(levels...)
+	}
+
+	return nodeEccentricity
+}
+
+func NodeCloseness(adjList [][]int) []float64 {
+	nodeCloseness := make([]float64, len(adjList))
+
+	for vertex := range adjList {
+		levels := bfs(adjList, vertex)
+
+		fmt.Println("l:", levels[:10])
+
+		nodeCloseness[vertex] = utils.Avg(levels...)
+	}
+
+	return nodeCloseness
+}
+
+func NodeBetweenness(adjList [][]int) []float64 {
+	nodeBetweenness := make([]float64, len(adjList))
 
 	for vertex := range adjList {
 		pathDAG, foundOrder, _ := findPaths(adjList, vertex)
@@ -22,17 +65,17 @@ func NodeCentrality(adjList [][]int) []float64 {
 
 		}
 
-		if int(pathsBy[vertex]) != len(adjList)-1 {
+		if math.Abs(pathsBy[vertex]-float64(len(adjList)-1)) > 0.5 {
 			fmt.Println("Error: int(pathsBy[vertex]) != len(adjList) - 1", pathsBy[vertex], len(adjList)-1)
 		}
 
 		pathsBy[vertex] = 0
-		for i := range nodeCentrality {
-			nodeCentrality[i] += pathsBy[i]
+		for i := range nodeBetweenness {
+			nodeBetweenness[i] += pathsBy[i]
 		}
 	}
 
-	return nodeCentrality
+	return nodeBetweenness
 }
 
 /*
