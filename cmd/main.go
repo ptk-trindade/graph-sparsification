@@ -4,36 +4,14 @@ import (
 	"bufio"
 	"fmt"
 	"math"
-	"math/rand"
 	"os"
-	"sort"
-	"time"
 
 	// "github.com/ptk-trindade/graph-sparsification/edgebetweenness"
 	// "github.com/ptk-trindade/graph-sparsification/effectiveresistance"
+
 	"github.com/ptk-trindade/graph-sparsification/nodecentrality"
 	"github.com/ptk-trindade/graph-sparsification/utils"
 )
-
-func min[E int|float64](vals ...int) int {
-	minVal := vals[0]
-	for _, val := range vals {
-		if val < minVal {
-			minVal = val
-		}
-	}
-	return minVal
-}
-
-func max[E int|float64](vals ...E) E {
-	maxVal := vals[0]
-	for _, val := range vals {
-		if val > maxVal {
-			maxVal = val
-		}
-	}
-	return maxVal
-}
 
 func start(calculateMetrics bool) [][]int {
 
@@ -41,11 +19,7 @@ func start(calculateMetrics bool) [][]int {
 
 	scanner.Scan()
 
-	method := scanner.Text()
-	if method != "effectiveresistance" && method != "edgebetweenness_divide" && method != "edgebetweenness_sum" && method != "compare" && method != "test" {
-		// fmt.Println("Invalid method")
-		panic("Invalid method")
-	}
+	_ = scanner.Text() //method
 
 	adjList, err := utils.ReadGraph(scanner)
 	if err != nil {
@@ -60,24 +34,24 @@ func start(calculateMetrics bool) [][]int {
 			degrees[i] = len(adjList[i])
 			avgDegree += float64(len(adjList[i]))
 		}
-	
+
 		avgDegree /= float64(len(adjList))
-	
+
 		stdDev := 0.0
 		minDegree := degrees[0]
 		maxDegree := degrees[0]
 		for _, d := range degrees {
 			tmp := (float64(d) - avgDegree)
-			stdDev += tmp*tmp
-			
-			minDegree = min(minDegree, d)
-			maxDegree= max(maxDegree, d)
+			stdDev += tmp * tmp
+
+			minDegree = utils.Min(minDegree, d)
+			maxDegree = utils.Max(maxDegree, d)
 		}
 
 		stdDev = stdDev / float64(len(adjList))
 		stdDev = math.Sqrt(stdDev)
 
-		fmt.Println(minDegree, avgDegree, maxDegree)
+		fmt.Printf("min: %d\navg: %.3f~%.3f\nmax: %d", minDegree, avgDegree, stdDev, maxDegree)
 	}
 
 	return adjList
@@ -90,335 +64,64 @@ func main() {
 }
 
 func test1(adjList [][]int) {
-	
-	realCentrality := nodecentrality.NodeCentrality(adjList)
-	mins, avgs, maxs := nodecentrality.ApproximateNodeCentrality(adjList)
 
-	// since the Jaccard function will consider the bigger values 
+	realCloseness, realEccentricity := nodecentrality.NodeClosenessAndEccentricity(adjList)
+
+	graphName := "random_1000_01" // random_1000_01
+	// nodecentrality.ApproximateCompareNodeCentrality(adjList, "closeless", realCloseness, realEccentricity, graphName)
+	// nodecentrality.ApproximateCompareNodeCentrality(adjList, "furtherBfsed", realCloseness, realEccentricity, graphName)
+	nodecentrality.ApproximateCompareNodeCentralityRandom(adjList, realCloseness, realEccentricity, graphName)
+
+}
+
+/*
+	randFloats := make([]float64, len(adjList))
+	for i := range randFloats {
+		randFloats[i] = rand.Float64()
+	}
+
+	// since the Jaccard function will consider the bigger values
 	// and I'm interested in the lower ones, I must invert the values
 	for i := range avgs {
-		avgs[i] = 1/avgs[i]
-		maxs[i] = 1/maxs[i]
+		avgs[i] = 1 / avgs[i]
+		maxs[i] = 1 / maxs[i]
 	}
 
 	percentages := []float64{0.01, 0.05, 0.1}
 	for _, p := range percentages {
-		fmt.Printf("Percentage: %f", p)
+		realMin := utils.CompareJaccard(realBetweenness, mins, p)
+		realAvg := utils.CompareJaccard(realBetweenness, avgs, p)
+		realMax := utils.CompareJaccard(realBetweenness, maxs, p)
 
-		realMin := CompareJaccard(realCentrality, mins, p)
-		realAvg := CompareJaccard(realCentrality, avgs, p)
-		realMax := CompareJaccard(realCentrality, maxs, p)
+		minAvg := utils.CompareJaccard(mins, avgs, p)
+		minMax := utils.CompareJaccard(mins, maxs, p)
 
-		minAvg := CompareJaccard(mins, avgs, p)
-		minMax := CompareJaccard(mins, maxs, p)
+		avgMax := utils.CompareJaccard(avgs, maxs, p)
 
-		avgMax := CompareJaccard(avgs, maxs, p)
+		fmt.Printf("%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\n", p, realMin, realAvg, realMax, minAvg, minMax, avgMax)
 
-		fmt.Printf("realMin %.6f\n realAvg %.6f\n realMax %.6f\n minAvg %.6f\n minMax %.6f\n avgMax %.6f\n", realMin, realAvg, realMax, minAvg, minMax, avgMax)
+		randReal := utils.CompareJaccard(randFloats, realBetweenness, p)
+		randMin := utils.CompareJaccard(randFloats, mins, p)
+		randAvg := utils.CompareJaccard(randFloats, avgs, p)
+		randMax := utils.CompareJaccard(randFloats, maxs, p)
+		fmt.Printf("%.4f\t%.4f\t%.4f\t%.4f\n", randReal, randMin, randAvg, randMax)
 	}
 
-}
+	realMinRS, realMinP := utils.CompareSpearman(realBetweenness, mins)
+	realAvgRS, realAvgP := utils.CompareSpearman(realBetweenness, avgs)
+	realMaxRS, realMaxP := utils.CompareSpearman(realBetweenness, maxs)
 
-func mainOld() {
+	minAvgRS, minAvgP := utils.CompareSpearman(mins, avgs)
+	minMaxRS, minMaxP := utils.CompareSpearman(mins, maxs)
 
-	scanner := bufio.NewScanner(os.Stdin)
+	avgMaxRS, avgMaxP := utils.CompareSpearman(avgs, maxs)
 
-	scanner.Scan()
+	fmt.Printf("%.4f %.4f\t%.4f %.4f\t%.4f %.4f\t%.4f %.4f\t%.4f %.4f\t%.4f %.4f\n", realMinRS, realMinP, realAvgRS, realAvgP, realMaxRS, realMaxP, minAvgRS, minAvgP, minMaxRS, minMaxP, avgMaxRS, avgMaxP)
 
-	method := scanner.Text()
-	if method != "effectiveresistance" && method != "edgebetweenness_divide" && method != "edgebetweenness_sum" && method != "compare" && method != "test" {
-		fmt.Println("Invalid method")
-		return
-	}
+	randRealRS, randRealP := utils.CompareSpearman(realBetweenness, randFloats)
+	randMinRS, randMinP := utils.CompareSpearman(randFloats, mins)
+	randAvgRS, randAvgP := utils.CompareSpearman(randFloats, avgs)
+	randMaxRS, randMaxP := utils.CompareSpearman(randFloats, maxs)
 
-	adjList, err := utils.ReadGraph(scanner)
-	if err != nil {
-		fmt.Println("Error reading graph")
-		return
-	}
-
-	degrees := make([]int, len(adjList))
-	avgDegree := 0.0
-	for i := range adjList {
-		degrees[i] = len(adjList[i])
-		avgDegree += float64(len(adjList[i]))
-	}
-
-	avgDegree /= float64(len(adjList))
-
-	stdDev := 0.0
-	min := degrees[0]
-	max := degrees[0]
-	for _, d := range degrees {
-		stdDev += (float64(d) - avgDegree) * (float64(d) - avgDegree)
-
-		if d < min {
-			min = d
-		}
-
-		if d > max {
-			max = d
-		}
-	}
-	stdDev = stdDev / float64(len(adjList))
-	stdDev = math.Sqrt(stdDev)
-
-	// fmt.Print(avgDegree, ",", stdDev, ",", min, ",", max, ",")
-
-	if method == "effectiveresistance" {
-		edgeWeight := effectiveresistance.EffectiveResistance(adjList)
-		fmt.Println(edgeWeight)
-
-	} else if method == "edgebetweenness_sum" || method == "edgebetweenness_divide" {
-		var edgeWeight *utils.EdgeWeight
-		if method == "edgebetweenness_divide" {
-			edgeWeight = edgebetweenness.EdgeBetweennessDivide(adjList)
-			edgeWeight.Show()
-		} else {
-			edgeWeight = edgebetweenness.EdgeBetweennessSum(adjList)
-			edgeWeight.Show()
-		}
-		fmt.Println(edgeWeight)
-	} else if method == "compare" {
-		edgeWeightEBS, pathQty1 := edgebetweenness.EdgeBetweennessCountPaths(adjList, false)
-		// edgeWeightEBS.Normalize()
-		// fmt.Println("sum")
-		// edgeWeight.Show()
-
-		fmt.Print(pathQty1, ",")
-
-		edgeWeightEBD := edgebetweenness.EdgeBetweennessDivide(adjList)
-		// edgeWeightEBD.Normalize()
-		// fmt.Println("divide")
-		// edgeWeight.Show()
-
-		edgeWeightER := effectiveresistance.EffectiveResistance(adjList)
-		if edgeWeightER == nil {
-			fmt.Println("Error computing effective resistance")
-			return
-		}
-		// edgeWeightER.Normalize()
-
-		rs, p := edgeWeightEBS.CompareSpearman(edgeWeightEBD)
-		jcc := edgeWeightEBS.CompareJaccard(edgeWeightEBD, 0.01)
-		fmt.Print(rs, ",", p, ",", jcc, ",")
-
-		rs, p = edgeWeightEBD.CompareSpearman(edgeWeightER)
-		jcc = edgeWeightEBD.CompareJaccard(edgeWeightER, 0.01)
-		fmt.Print(rs, ",", p, ",", jcc, ",")
-
-		rs, p = edgeWeightEBS.CompareSpearman(edgeWeightER)
-		jcc = edgeWeightEBS.CompareJaccard(edgeWeightER, 0.01)
-		fmt.Print(rs, ",", p, ",", jcc)
-	} else if method == "test" {
-
-		nodeQty := len(adjList)
-
-		edgeWeightFull := edgebetweenness.EdgeBetweennessDivide(adjList)
-
-		fmt.Printf("")
-		// costs := []int{2 * nodeQty, 10 * nodeQty, int(math.Sqrt(float64(nodeQty))) * nodeQty}
-		// label := []string{"2n", "10n", "n*sqrt(n)"}
-		// for j := range costs {
-
-		// 	fmt.Printf("\n\n%s\n", label[j])
-
-		// start
-		i := 0
-		// topNodes := sortByNeighborQty(adjList)
-		topNodes := scrambleNumbers(nodeQty)
-		for i < 1000 {
-			if i < 10 {
-				i += 1
-			} else {
-				i += 10
-			}
-
-			bfsQty := nodeQty * i / 1000
-
-			// CHANGE COST  HERE!
-			cost := 10 * nodeQty
-
-			depth := cost / bfsQty
-			depth = min_(depth, nodeQty)
-
-			edgeWeightPctg := edgebetweenness.EdgeBetweennessParcial(adjList, true, topNodes, bfsQty, depth, true)
-
-			jcc01 := edgeWeightFull.CompareJaccard(edgeWeightPctg, 0.001)
-			jcc05 := edgeWeightFull.CompareJaccard(edgeWeightPctg, 0.005)
-			jcc1 := edgeWeightFull.CompareJaccard(edgeWeightPctg, 0.01)
-			jcc2 := edgeWeightFull.CompareJaccard(edgeWeightPctg, 0.02)
-
-			fmt.Printf("%d\t%d\t-\t%.4f\t%.4f\t%.4f\t%.4f\n", bfsQty, depth, jcc01, jcc05, jcc1, jcc2)
-
-			// depth := costs[j] / bfsQty
-			// depth = min_(depth, nodeQty)
-
-			// edgeWeightPctg := edgebetweenness.EdgeBetweennessParcial(adjList, true, topNodes, bfsQty, depth, false)
-
-			// jcc01 := edgeWeightFull.CompareJaccard(edgeWeightPctg, 0.001)
-			// jcc05 := edgeWeightFull.CompareJaccard(edgeWeightPctg, 0.005)
-			// jcc1 := edgeWeightFull.CompareJaccard(edgeWeightPctg, 0.01)
-			// jcc2 := edgeWeightFull.CompareJaccard(edgeWeightPctg, 0.02)
-
-			// fmt.Printf("\t%d\t%d\t-\t%.4f\t%.4f\t%.4f\t%.4f\n", bfsQty, depth, jcc01, jcc05, jcc1, jcc2)
-		}
-		// }
-		// end
-		return
-
-		bfsQty := nodeQty
-		bfsQtyStr := "n"
-		topNodes = sortByNeighborQty(adjList)
-
-		sqrtn := int(math.Sqrt(float64(nodeQty)))
-		edgeWeightSqrtN := edgebetweenness.EdgeBetweennessParcial(adjList, true, topNodes, bfsQty, sqrtn, true)
-
-		logn := int(math.Log2(float64(nodeQty)) * 2)
-		edgeWeightLogN := edgebetweenness.EdgeBetweennessParcial(adjList, true, topNodes, bfsQty, logn, true)
-
-		halfn := nodeQty / 2
-		edgeWeightHalfN := edgebetweenness.EdgeBetweennessParcial(adjList, true, topNodes, bfsQty, halfn, true)
-
-		fmt.Println("n:", nodeQty, "\nSqrt(n):", sqrtn, "\n2*Log(n):", logn, "\nn/2:", halfn)
-
-		// Comparisons
-		// fmt.Println("\n\nFull - Sqrt(n)")
-		jcc01 := edgeWeightFull.CompareJaccard(edgeWeightSqrtN, 0.001)
-		// fmt.Printf("0.1%%: %.4f\n", jcc01)
-
-		jcc05 := edgeWeightFull.CompareJaccard(edgeWeightSqrtN, 0.005)
-		// fmt.Printf("0.5%%: %.4f\n", jcc05)
-
-		jcc1 := edgeWeightFull.CompareJaccard(edgeWeightSqrtN, 0.01)
-		// fmt.Printf("1%%: %.4f\n", jcc1)
-
-		jcc2 := edgeWeightFull.CompareJaccard(edgeWeightSqrtN, 0.02)
-		// fmt.Printf("2%%: %.4f\n", jcc2)
-
-		fmt.Printf("%s\t%d\tsqrt(n)\t%d\t-\t%.4f\t%.4f\t%.4f\t%.4f\n", bfsQtyStr, bfsQty, sqrtn, jcc01, jcc05, jcc1, jcc2)
-
-		// ------------------------
-
-		// fmt.Println("\n\nFull - Log(n)")
-		jcc01 = edgeWeightFull.CompareJaccard(edgeWeightLogN, 0.001)
-		// fmt.Printf("0.1%%: %.4f\n", jcc01)
-
-		jcc05 = edgeWeightFull.CompareJaccard(edgeWeightLogN, 0.005)
-		// fmt.Printf("0.5%%: %.4f\n", jcc05)
-
-		jcc1 = edgeWeightFull.CompareJaccard(edgeWeightLogN, 0.01)
-		// fmt.Printf("1%%: %.4f\n", jcc1)
-
-		jcc2 = edgeWeightFull.CompareJaccard(edgeWeightLogN, 0.02)
-		// fmt.Printf("2%%: %.4f\n", jcc2)
-
-		fmt.Printf("%s\t%d\tlog(n)\t%d\t-\t%.4f\t%.4f\t%.4f\t%.4f\n", bfsQtyStr, bfsQty, logn, jcc01, jcc05, jcc1, jcc2)
-
-		// ------------------------
-
-		// fmt.Println("\n\nFull - n/2")
-		jcc01 = edgeWeightFull.CompareJaccard(edgeWeightHalfN, 0.001)
-		// fmt.Printf("0.1%%: %.4f\n", jcc01)
-
-		jcc05 = edgeWeightFull.CompareJaccard(edgeWeightHalfN, 0.005)
-		// fmt.Printf("0.5%%: %.4f\n", jcc05)
-
-		jcc1 = edgeWeightFull.CompareJaccard(edgeWeightHalfN, 0.01)
-		// fmt.Printf("1%%: %.4f\n", jcc1)
-
-		jcc2 = edgeWeightFull.CompareJaccard(edgeWeightHalfN, 0.02)
-		// fmt.Printf("2%%: %.4f\n", jcc2)
-
-		fmt.Printf("%s\t%d\tn/2\t%d\t-\t%.4f\t%.4f\t%.4f\t%.4f\n", bfsQtyStr, bfsQty, halfn, jcc01, jcc05, jcc1, jcc2)
-
-		// ------------------------
-
-		// fmt.Println("\n\nSqrt(n) - Log(n)")
-		// jcc01 = edgeWeightSqrtN.CompareJaccard(edgeWeightLogN, 0.001)
-		// // fmt.Printf("0.1%%: %.4f\n", jcc01)
-
-		// jcc05 = edgeWeightSqrtN.CompareJaccard(edgeWeightLogN, 0.005)
-		// // fmt.Printf("0.5%%: %.4f\n", jcc05)
-
-		// jcc1 = edgeWeightSqrtN.CompareJaccard(edgeWeightLogN, 0.01)
-		// // fmt.Printf("1%%: %.4f\n", jcc1)
-
-		// jcc2 = edgeWeightSqrtN.CompareJaccard(edgeWeightLogN, 0.02)
-		// // fmt.Printf("2%%: %.4f\n", jcc2)
-
-		// // ------------------------
-
-		// fmt.Println("\n\nSqrt(n) - n/2")
-		// jcc01 = edgeWeightSqrtN.CompareJaccard(edgeWeightHalfN, 0.001)
-		// // fmt.Printf("0.1%%: %.4f\n", jcc01)
-
-		// jcc05 = edgeWeightSqrtN.CompareJaccard(edgeWeightHalfN, 0.005)
-		// // fmt.Printf("0.5%%: %.4f\n", jcc05)
-
-		// jcc1 = edgeWeightSqrtN.CompareJaccard(edgeWeightHalfN, 0.01)
-		// // fmt.Printf("1%%: %.4f\n", jcc1)
-
-		// jcc2 = edgeWeightSqrtN.CompareJaccard(edgeWeightHalfN, 0.02)
-		// // fmt.Printf("2%%: %.4f\n", jcc2)
-
-		// // ------------------------
-
-		// fmt.Println("\n\nLog(n) - n/2")
-		// jcc01 = edgeWeightLogN.CompareJaccard(edgeWeightHalfN, 0.001)
-		// // fmt.Printf("0.1%%: %.4f\n", jcc01)
-
-		// jcc05 = edgeWeightLogN.CompareJaccard(edgeWeightHalfN, 0.005)
-		// // fmt.Printf("0.5%%: %.4f\n", jcc05)
-
-		// jcc1 = edgeWeightLogN.CompareJaccard(edgeWeightHalfN, 0.01)
-		// // fmt.Printf("1%%: %.4f\n", jcc1)
-
-		// jcc2 = edgeWeightLogN.CompareJaccard(edgeWeightHalfN, 0.02)
-		// // fmt.Printf("2%%: %.4f\n", jcc2)
-
-	}
-}
-
-// Top 10 nodes with higher degree
-type Node struct {
-	Index       int
-	NeighborQty int
-}
-
-func sortByNeighborQty(adjList [][]int) []int {
-	neighborQtys := make([]Node, len(adjList))
-	for i, neighbors := range adjList {
-		neighborQtys[i] = Node{Index: i, NeighborQty: len(neighbors)}
-	}
-
-	// Sort nodes by neighbor count in descending order
-	sort.Slice(neighborQtys, func(i, j int) bool {
-		return neighborQtys[i].NeighborQty > neighborQtys[j].NeighborQty
-	})
-
-	// Get the top n_value nodes (or less if there are fewer than n_value nodes)
-	tops := make([]int, 0)
-	for i := 0; i < len(neighborQtys); i++ {
-		tops = append(tops, neighborQtys[i].Index)
-	}
-
-	return tops
-}
-
-// scrambleNumbers generates a slice [0, 1, ... n] scrambled
-func scrambleNumbers(n int) []int {
-	rand.Seed(time.Now().UnixNano())
-
-	slice := make([]int, n)
-	for i := 0; i < n; i++ {
-		slice[i] = i
-	}
-
-	for i := n - 1; i > 0; i-- {
-		j := rand.Intn(i + 1)
-		slice[i], slice[j] = slice[j], slice[i]
-	}
-
-	return slice
-}
+	fmt.Printf("%.4f %.4f\t%.4f %.4f\t%.4f %.4f\t%.4f %.4f\n", randRealRS, randRealP, randMinRS, randMinP, randAvgRS, randAvgP, randMaxRS, randMaxP)
+*/

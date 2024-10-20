@@ -1,9 +1,15 @@
 package nodecentrality
 
-func ApproximateNodeCentrality(adjList [][]int) ([]float64, []float64, []float64) {
-	
+import (
+	"fmt"
+
+	"github.com/ptk-trindade/graph-sparsification/utils"
+)
+
+func ApproximateNodeCentrality(adjList [][]int, minIterations int, maxIterations int, pickCriteria string) ([]float64, []int) {
+
 	firstLevels := bfs(adjList, 0) // start at any vertex
-	
+
 	// find first corner
 	var cornerNode, maxLevel int
 	for node, level := range firstLevels {
@@ -12,46 +18,126 @@ func ApproximateNodeCentrality(adjList [][]int) ([]float64, []float64, []float64
 			cornerNode = node
 		}
 	}
-	
-	levels := NewLevels(len(adjList)) 
+
+	levels := NewLevels(len(adjList))
 	wcb := false // node was corner before
-	for !wcb {
-		levels := bfs(adjList, cornerNode)
+	iterations := 0
+	for (!wcb || iterations < minIterations) && iterations < maxIterations {
+		iterations++
+		foundLevels := bfs(adjList, cornerNode)
 
-		levels.AddLevels(levels)
-		cornerNode, wcb = levels.GetCornerNode()
+		levels.AddLevels(foundLevels)
+
+		cornerNode, wcb = levels.GetCloselessNode()
 	}
+	fmt.Println("iterations:", iterations)
+	closeness, eccentricity := levels.GetMetrics()
 
-	minsInt, avgs, maxsInt := levels.GetMetrics()
-
-	minsFloat := make([]float64, len(minsFloat))
-	maxsFloat := make([]float64, len(maxsInts))
-	for i := range minsInt {
-		minsFloat[i] = float64(minsInt[i])
-		maxsFloat[i] = float64(maxsInts[i])
-	}
-
-	return minsFloat, avgs, maxsFloat
+	return closeness, eccentricity
 }
 
-func bfs(adjList [][]int, start int) []int {
+func ApproximateCompareNodeCentrality(adjList [][]int, pickCriteria string, realCloseness []float64, realEccentricity []int, graphName string) {
 
-	levels := make([]int, len(adjList))
-	fillSlice(levels, -1)
+	firstLevels := bfs(adjList, 0) // start at any vertex
 
-	levels[start] = 0
-	queue := []int{start}
-	for len(queue) > 0 {
-		currNode := queue[0]
-		queue = queue[1:]
-
-		for neighbor := range adjList[currNode] {
-			if levels[neighbor] == -1 {
-				levels[neighbor] = levels[currNode] + 1
-				queue = append(queue, currNode)
-			}
+	// find first corner
+	var cornerNode, maxLevel int
+	for node, level := range firstLevels {
+		if level > maxLevel {
+			maxLevel = level
+			cornerNode = node
 		}
 	}
 
-	return levels
+	levels := NewLevels(len(adjList))
+	for iterations := 0; iterations < len(adjList); iterations++ {
+		foundLevels := bfs(adjList, cornerNode)
+
+		levels.AddLevels(foundLevels)
+
+		if pickCriteria == "closeless" {
+			var wcb bool
+			cornerNode, wcb = levels.GetCloselessNode()
+
+			approxCloseness, approxEccentricity := levels.GetMetrics()
+
+			// fmt.Println("C:", realCloseness[:10], approxCloseness[:10])
+			// fmt.Println("E:", realEccentricity[:10], approxEccentricity[:10])
+
+			mseCloseness := utils.CalculateMSE(realCloseness, approxCloseness)
+			mseEccentricity := utils.CalculateMSE(realEccentricity, approxEccentricity)
+
+			spearmanCloseness, pC := utils.CompareSpearman(realCloseness, approxCloseness)
+			spearmanEccentricity, pE := utils.CompareSpearman(sliceIntToFloat(realEccentricity), sliceIntToFloat(approxEccentricity))
+
+			fmt.Printf("%s;closeless;%d;%t;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f\n", graphName, iterations, wcb, mseCloseness, spearmanCloseness, pC, mseEccentricity, spearmanEccentricity, pE)
+
+		} else if pickCriteria == "random" {
+
+			cornerNode = levels.GetRandomNode()
+
+			approxCloseness, approxEccentricity := levels.GetMetrics()
+
+			mseCloseness := utils.CalculateMSE(realCloseness, approxCloseness)
+			mseEccentricity := utils.CalculateMSE(realEccentricity, approxEccentricity)
+
+			spearmanCloseness, pC := utils.CompareSpearman(realCloseness, approxCloseness)
+			spearmanEccentricity, pE := utils.CompareSpearman(sliceIntToFloat(realEccentricity), sliceIntToFloat(approxEccentricity))
+
+			fmt.Printf("%s;closeless;%d;-;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f\n", graphName, iterations, mseCloseness, spearmanCloseness, pC, mseEccentricity, spearmanEccentricity, pE)
+
+		} else {
+			var distanceFromBfsedNode int
+			cornerNode, distanceFromBfsedNode = levels.GetFurtherBfsedNode()
+
+			approxCloseness, approxEccentricity := levels.GetMetrics()
+
+			mseCloseness := utils.CalculateMSE(realCloseness, approxCloseness)
+			mseEccentricity := utils.CalculateMSE(realEccentricity, approxEccentricity)
+
+			spearmanCloseness, pC := utils.CompareSpearman(realCloseness, approxCloseness)
+			spearmanEccentricity, pE := utils.CompareSpearman(sliceIntToFloat(realEccentricity), sliceIntToFloat(approxEccentricity))
+
+			fmt.Printf("%s;further_bfsed;%d;%d;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f\n", graphName, iterations, distanceFromBfsedNode, mseCloseness, spearmanCloseness, pC, mseEccentricity, spearmanEccentricity, pE)
+		}
+	}
+	// graph;bfs_qty;MSE_closeness;spearman_closeness;spearman_p_closeness;MSE_eccentricity;spearman_eccentricity,spearman_p_eccentricity
+
+}
+
+func ApproximateCompareNodeCentralityRandom(adjList [][]int, realCloseness []float64, realEccentricity []int, graphName string) {
+
+	nodeIdxes := make([]int, len(adjList))
+	for i := range nodeIdxes {
+		nodeIdxes[i] = i
+	}
+	utils.Scramble(nodeIdxes)
+
+	levels := NewLevels(len(adjList))
+	for iterations, nodeId := range nodeIdxes {
+		foundLevels := bfs(adjList, nodeId)
+
+		levels.AddLevels(foundLevels)
+
+		approxCloseness, approxEccentricity := levels.GetMetrics()
+
+		mseCloseness := utils.CalculateMSE(realCloseness, approxCloseness)
+		mseEccentricity := utils.CalculateMSE(realEccentricity, approxEccentricity)
+
+		spearmanCloseness, pC := utils.CompareSpearman(realCloseness, approxCloseness)
+		spearmanEccentricity, pE := utils.CompareSpearman(sliceIntToFloat(realEccentricity), sliceIntToFloat(approxEccentricity))
+
+		fmt.Printf("%s;random;%d;-;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f\n", graphName, iterations, mseCloseness, spearmanCloseness, pC, mseEccentricity, spearmanEccentricity, pE)
+
+	}
+	// graph;bfs_qty;MSE_closeness;spearman_closeness;spearman_p_closeness;MSE_eccentricity;spearman_eccentricity,spearman_p_eccentricity
+
+}
+
+func sliceIntToFloat(slice []int) []float64 {
+	sliceFloat := make([]float64, len(slice))
+	for i, v := range slice {
+		sliceFloat[i] = float64(v)
+	}
+	return sliceFloat
 }
