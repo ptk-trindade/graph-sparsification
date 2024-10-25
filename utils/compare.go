@@ -19,32 +19,37 @@ func CompareJaccard(metric1 []float64, metric2 []float64, topK float64) float64 
 		return 0.0
 	}
 
-	indexes1 := topKIndexes(metric1, topK)
-	indexes2 := topKIndexes(metric2, topK)
-
-	// get the intersection
-	intersection := 0
-	union := len(indexes1) + len(indexes2)
-	for idx := range indexes1 {
-		if indexes2[idx] {
-			intersection++
-			union--
-		}
-	}
-
-	// threshold1 := findTopKThreshold(metric1, topK)
-	// threshold2 := findTopKThreshold(metric2, topK)
+	// METHOD 1: Always get the exact top K percent, in case of ties, some are randomly chosen to be excluded
+	// indexes1 := topKIndexes(metric1, topK)
+	// indexes2 := topKIndexes(metric2, topK)
 
 	// // get the intersection
-	// var intersection, union int
-	// for i := range metric1 {
-	// 	if metric1[i] >= threshold1 || metric2[i] >= threshold2 { // at least one number is high
-	// 		union++
-	// 		if metric1[i] >= threshold1 && metric2[i] >= threshold2 { // both numbers are high
-	// 			intersection++
-	// 		}
+	// intersection := 0
+	// union := len(indexes1) + len(indexes2)
+	// for idx := range indexes1 {
+	// 	if indexes2[idx] {
+	// 		intersection++
+	// 		union--
 	// 	}
 	// }
+
+	// METHOD 2: In case of a tie, get a few more elements
+	threshold1 := findTopKThreshold(metric1, topK)
+	threshold2 := findTopKThreshold(metric2, topK)
+
+	// get the intersection
+	var intersection, union int
+	for i := range metric1 {
+		isInTop1 := metric1[i] >= threshold1
+		isInTop2 := metric2[i] >= threshold2
+
+		if isInTop1 || isInTop2 { // at least one number is high
+			union++
+			if isInTop1 && isInTop2 { // both numbers are high
+				intersection++
+			}
+		}
+	}
 
 	return float64(intersection) / float64(union)
 }

@@ -67,9 +67,9 @@ func test1(adjList [][]int) {
 
 	realCloseness, realEccentricity := nodecentrality.NodeClosenessAndEccentricity(adjList)
 
-	graphName := "random_1000_01" // random_1000_01
-	// nodecentrality.ApproximateCompareNodeCentrality(adjList, "closeless", realCloseness, realEccentricity, graphName)
-	// nodecentrality.ApproximateCompareNodeCentrality(adjList, "furtherBfsed", realCloseness, realEccentricity, graphName)
+	graphName := "collaboratory"
+	nodecentrality.ApproximateCompareNodeCentrality(adjList, "closeless", realCloseness, realEccentricity, graphName)
+	nodecentrality.ApproximateCompareNodeCentrality(adjList, "furtherBfsed", realCloseness, realEccentricity, graphName)
 	nodecentrality.ApproximateCompareNodeCentralityRandom(adjList, realCloseness, realEccentricity, graphName)
 
 }
