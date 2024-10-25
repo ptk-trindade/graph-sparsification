@@ -62,7 +62,8 @@ def print_degree_statistics(degrees):
     print(f"Maximum degree: {max_degree}")
 
 def main():
-    input_file = r'C:\Users\PatrickTrindade\OneDrive - AtlasRen\Documentos\myStuff\git\graph-sparsification\helper\tmp.txt'
+    input_file = r'C:\Users\Ptk\graph-sparsification\txtFiles\inputs\erdosRenyi\redosErni_4000.txt'
+
     num_nodes, edges = read_graph(input_file)
 
     components = find_components(num_nodes, edges)

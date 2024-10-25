@@ -71,23 +71,15 @@ func ApproximateCompareNodeCentrality(adjList [][]int, pickCriteria string, real
 			spearmanCloseness, pC := utils.CompareSpearman(realCloseness, approxCloseness)
 			spearmanEccentricity, pE := utils.CompareSpearman(sliceIntToFloat(realEccentricity), sliceIntToFloat(approxEccentricity))
 
-			fmt.Printf("%s;closeless;%d;%t;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f\n", graphName, iterations, wcb, mseCloseness, spearmanCloseness, pC, mseEccentricity, spearmanEccentricity, pE)
+			jaccard1Closeness := utils.CompareJaccard(realCloseness, approxCloseness, 0.01)
+			jaccard5Closeness := utils.CompareJaccard(realCloseness, approxCloseness, 0.05)
 
-		} else if pickCriteria == "random" {
+			jaccard1Eccentricity := utils.CompareJaccard(sliceIntToFloat(realEccentricity), sliceIntToFloat(approxEccentricity), 0.01)
+			jaccard5Eccentricity := utils.CompareJaccard(sliceIntToFloat(realEccentricity), sliceIntToFloat(approxEccentricity), 0.05)
 
-			cornerNode = levels.GetRandomNode()
+			fmt.Printf("%s;closeless;%d;%t;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f\n", graphName, iterations, wcb, mseCloseness, spearmanCloseness, pC, mseEccentricity, spearmanEccentricity, pE, jaccard1Closeness, jaccard5Closeness, jaccard1Eccentricity, jaccard5Eccentricity)
 
-			approxCloseness, approxEccentricity := levels.GetMetrics()
-
-			mseCloseness := utils.CalculateMSE(realCloseness, approxCloseness)
-			mseEccentricity := utils.CalculateMSE(realEccentricity, approxEccentricity)
-
-			spearmanCloseness, pC := utils.CompareSpearman(realCloseness, approxCloseness)
-			spearmanEccentricity, pE := utils.CompareSpearman(sliceIntToFloat(realEccentricity), sliceIntToFloat(approxEccentricity))
-
-			fmt.Printf("%s;closeless;%d;-;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f\n", graphName, iterations, mseCloseness, spearmanCloseness, pC, mseEccentricity, spearmanEccentricity, pE)
-
-		} else {
+		} else { // furtherBfsed
 			var distanceFromBfsedNode int
 			cornerNode, distanceFromBfsedNode = levels.GetFurtherBfsedNode()
 
@@ -99,7 +91,13 @@ func ApproximateCompareNodeCentrality(adjList [][]int, pickCriteria string, real
 			spearmanCloseness, pC := utils.CompareSpearman(realCloseness, approxCloseness)
 			spearmanEccentricity, pE := utils.CompareSpearman(sliceIntToFloat(realEccentricity), sliceIntToFloat(approxEccentricity))
 
-			fmt.Printf("%s;further_bfsed;%d;%d;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f\n", graphName, iterations, distanceFromBfsedNode, mseCloseness, spearmanCloseness, pC, mseEccentricity, spearmanEccentricity, pE)
+			jaccard1Closeness := utils.CompareJaccard(realCloseness, approxCloseness, 0.01)
+			jaccard5Closeness := utils.CompareJaccard(realCloseness, approxCloseness, 0.05)
+
+			jaccard1Eccentricity := utils.CompareJaccard(sliceIntToFloat(realEccentricity), sliceIntToFloat(approxEccentricity), 0.01)
+			jaccard5Eccentricity := utils.CompareJaccard(sliceIntToFloat(realEccentricity), sliceIntToFloat(approxEccentricity), 0.05)
+
+			fmt.Printf("%s;further_bfsed;%d;%d;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f\n", graphName, iterations, distanceFromBfsedNode, mseCloseness, spearmanCloseness, pC, mseEccentricity, spearmanEccentricity, pE, jaccard1Closeness, jaccard5Closeness, jaccard1Eccentricity, jaccard5Eccentricity)
 		}
 	}
 	// graph;bfs_qty;MSE_closeness;spearman_closeness;spearman_p_closeness;MSE_eccentricity;spearman_eccentricity,spearman_p_eccentricity
@@ -128,7 +126,13 @@ func ApproximateCompareNodeCentralityRandom(adjList [][]int, realCloseness []flo
 		spearmanCloseness, pC := utils.CompareSpearman(realCloseness, approxCloseness)
 		spearmanEccentricity, pE := utils.CompareSpearman(sliceIntToFloat(realEccentricity), sliceIntToFloat(approxEccentricity))
 
-		fmt.Printf("%s;random;%d;-;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f\n", graphName, iterations, mseCloseness, spearmanCloseness, pC, mseEccentricity, spearmanEccentricity, pE)
+		jaccard1Closeness := utils.CompareJaccard(realCloseness, approxCloseness, 0.01)
+		jaccard5Closeness := utils.CompareJaccard(realCloseness, approxCloseness, 0.05)
+
+		jaccard1Eccentricity := utils.CompareJaccard(sliceIntToFloat(realEccentricity), sliceIntToFloat(approxEccentricity), 0.01)
+		jaccard5Eccentricity := utils.CompareJaccard(sliceIntToFloat(realEccentricity), sliceIntToFloat(approxEccentricity), 0.05)
+
+		fmt.Printf("%s;random;%d;-;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f\n", graphName, iterations, mseCloseness, spearmanCloseness, pC, mseEccentricity, spearmanEccentricity, pE, jaccard1Closeness, jaccard5Closeness, jaccard1Eccentricity, jaccard5Eccentricity)
 
 	}
 	// graph;bfs_qty;MSE_closeness;spearman_closeness;spearman_p_closeness;MSE_eccentricity;spearman_eccentricity,spearman_p_eccentricity
