@@ -87,13 +87,13 @@ def save_graph_to_file(G, file_path):
 n = 4000  # Number of nodes
 avg_degree = 40  # Average degree
 mu = 0.3  # Mixing parameter (closer to 0 = strong community structure)
-num_communities = 50  # Number of communities
+num_communities = 10  # Number of communities
 
 # Generate the graph
 G = generate_abcd_graph(n, avg_degree, mu, num_communities)
 
 # Save the graph to a file
-output_file = "abcd_graph.txt"
+output_file = "abcd_graph_10.txt"
 save_graph_to_file(G, output_file)
 
 # # Plot the graph

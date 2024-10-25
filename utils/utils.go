@@ -64,3 +64,12 @@ func Avg[E Number](vals ...E) float64 {
 
 	return sum
 }
+
+func Sum[E Number](vals ...E) float64 {
+	var sum float64
+	for _, val := range vals {
+		sum += float64(val)
+	}
+
+	return sum
+}

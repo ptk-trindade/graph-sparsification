@@ -1,6 +1,9 @@
 package nodecentrality
 
-import "github.com/ptk-trindade/graph-sparsification/utils"
+import (
+	"github.com/ptk-trindade/graph-sparsification/utils"
+	"math/rand"
+)
 
 type Levels struct {
 	levels [][]int // [node][iteration]level
@@ -57,7 +60,7 @@ Finds the node with lowest Closeness (the node with higher avg of levels) based 
 output: id of CornerNode, Closeless node was already picked as a corner (therefore wasn't picked again)
 */
 func (lvl Levels) GetCloselessNode() (int, bool) {
-	var pickingNode int
+	var pickingNode, equalyGoodOptions int
 	var maxAvgDistance, pickingAvgDistance float64
 
 	for node, nodeLevels := range lvl.levels {
@@ -69,9 +72,19 @@ func (lvl Levels) GetCloselessNode() (int, bool) {
 			maxAvgDistance = avgDistance
 		}
 
-		if !wasCB && avgDistance > pickingAvgDistance {
-			pickingAvgDistance = avgDistance
-			pickingNode = node
+		if !wasCB {
+			if avgDistance > pickingAvgDistance {
+				pickingAvgDistance = avgDistance
+				pickingNode = node
+
+			} else if avgDistance == pickingAvgDistance { // a tie happened, will run the tie breaker
+				equalyGoodOptions++
+				if rand.Intn(equalyGoodOptions) == 0 { // makes sure every node has the same probability of being chosen
+					pickingAvgDistance = avgDistance
+					pickingNode = node
+				}
+
+			}
 		}
 	}
 
@@ -84,8 +97,8 @@ Finds the node with highest min distance from a 'BFSed' node
 output: id of CornerNode, distance from the closer 'BFSed' node
 */
 func (lvl Levels) GetFurtherBfsedNode() (int, int) {
-	var cornerNode, closerBfsedNode int
-
+	var cornerNode, closerBfsedNode, equalyCloseOptions int
+	
 	for node, nodeLevels := range lvl.levels {
 
 		closerBN := utils.Min(nodeLevels...)
@@ -93,6 +106,14 @@ func (lvl Levels) GetFurtherBfsedNode() (int, int) {
 		if closerBN > closerBfsedNode {
 			cornerNode = node
 			closerBfsedNode = closerBN
+			equalyCloseOptions = 1
+
+		} else if closerBN == closerBfsedNode { // current node is as close as closerBfsedNode
+			equalyCloseOptions++
+			if rand.Intn(equalyCloseOptions) == 0 { // makes sure every node has the same probability of being chosen
+				cornerNode = node
+				closerBfsedNode = closerBN
+			}
 		}
 	}
 
