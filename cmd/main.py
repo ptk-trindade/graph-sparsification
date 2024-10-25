@@ -69,7 +69,7 @@ def compare_jaccard(metric1, metric2, topK):
     return intersection / union if union != 0 else 0.0
 
 # Load the graph from the file
-graph = load_graph_from_file(r"txtFiles\inputs\real_graphs\facebook.txt")
+graph = load_graph_from_file(r"txtFiles\inputs\erdosRenyi\tmp.txt")
 
 # 1. Calculate the exact closeness centrality (this will be our reference)
 normalized = True # Closeness normalization
