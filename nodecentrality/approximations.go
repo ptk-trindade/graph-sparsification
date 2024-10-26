@@ -60,8 +60,11 @@ func ApproximateCompareNodeCentrality(adjList [][]int, pickCriteria string, real
 			cornerNode, wcb = levels.GetCloselessNode()
 
 			avgDistance, approxEccentricity := levels.GetMetrics()
-			approxCloseness := 1 / (avgDistance*len(adjList))
-			
+			approxCloseness := make([]float64, len(adjList))
+			for i := range approxCloseness {
+				approxCloseness[i] = 1.0 / (avgDistance[i] * float64(len(adjList)))
+			}
+
 			// fmt.Println("C:", realCloseness[:10], approxCloseness[:10])
 			// fmt.Println("E:", realEccentricity[:10], approxEccentricity[:10])
 
