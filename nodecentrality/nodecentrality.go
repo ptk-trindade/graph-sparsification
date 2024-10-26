@@ -14,7 +14,8 @@ func NodeClosenessAndEccentricity(adjList [][]int) ([]float64, []int) {
 	for vertex := range adjList {
 		levels := bfs(adjList, vertex)
 
-		nodeCloseness[vertex] = float64(len(adjList)-1) / utils.Sum(levels...)
+		nodeCloseness[vertex] = float64(len(adjList)-1) / float64(utils.Sum(levels...))
+
 		nodeEccentricity[vertex] = utils.Max(levels...)
 	}
 
@@ -41,7 +42,7 @@ func NodeCloseness(adjList [][]int) []float64 {
 
 		fmt.Println("l:", levels[:10])
 
-		nodeCloseness[vertex] = float64(len(adjList)-1) / utils.Sum(levels...)
+		nodeCloseness[vertex] = float64(len(adjList)-1) / float64(utils.Sum(levels...))
 	}
 
 	return nodeCloseness

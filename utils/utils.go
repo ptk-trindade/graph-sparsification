@@ -65,10 +65,26 @@ func Avg[E Number](vals ...E) float64 {
 	return sum
 }
 
-func Sum[E Number](vals ...E) float64 {
+func AvgWithoutZeros[E Number](vals ...E) float64 {
 	var sum float64
+	var zeroCount int
 	for _, val := range vals {
-		sum += float64(val)
+		if val != 0 {
+			sum += float64(val)
+		} else {
+			zeroCount++
+		}
+	}
+
+	sum /= float64(len(vals) - zeroCount)
+
+	return sum
+}
+
+func Sum[E Number](vals ...E) E {
+	var sum E
+	for _, val := range vals {
+		sum += val
 	}
 
 	return sum

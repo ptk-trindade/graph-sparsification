@@ -6,35 +6,35 @@ import (
 	"github.com/ptk-trindade/graph-sparsification/utils"
 )
 
-func ApproximateNodeCentrality(adjList [][]int, minIterations int, maxIterations int, pickCriteria string) ([]float64, []int) {
+// func ApproximateNodeCentrality(adjList [][]int, minIterations int, maxIterations int, pickCriteria string) ([]float64, []int) {
 
-	firstLevels := bfs(adjList, 0) // start at any vertex
+// 	firstLevels := bfs(adjList, 0) // start at any vertex
 
-	// find first corner
-	var cornerNode, maxLevel int
-	for node, level := range firstLevels {
-		if level > maxLevel {
-			maxLevel = level
-			cornerNode = node
-		}
-	}
+// 	// find first corner
+// 	var cornerNode, maxLevel int
+// 	for node, level := range firstLevels {
+// 		if level > maxLevel {
+// 			maxLevel = level
+// 			cornerNode = node
+// 		}
+// 	}
 
-	levels := NewLevels(len(adjList))
-	wcb := false // node was corner before
-	iterations := 0
-	for (!wcb || iterations < minIterations) && iterations < maxIterations {
-		iterations++
-		foundLevels := bfs(adjList, cornerNode)
+// 	levels := NewLevels(len(adjList))
+// 	wcb := false // node was corner before
+// 	iterations := 0
+// 	for (!wcb || iterations < minIterations) && iterations < maxIterations {
+// 		iterations++
+// 		foundLevels := bfs(adjList, cornerNode)
 
-		levels.AddLevels(foundLevels)
+// 		levels.AddLevels(foundLevels)
 
-		cornerNode, wcb = levels.GetCloselessNode()
-	}
-	fmt.Println("iterations:", iterations)
-	closeness, eccentricity := levels.GetMetrics()
+// 		cornerNode, wcb = levels.GetCloselessNode()
+// 	}
+// 	fmt.Println("iterations:", iterations)
+// 	closeness, eccentricity := levels.GetMetrics()
 
-	return closeness, eccentricity
-}
+// 	return closeness, eccentricity
+// }
 
 func ApproximateCompareNodeCentrality(adjList [][]int, pickCriteria string, realCloseness []float64, realEccentricity []int, graphName string) {
 
@@ -62,7 +62,7 @@ func ApproximateCompareNodeCentrality(adjList [][]int, pickCriteria string, real
 			avgDistance, approxEccentricity := levels.GetMetrics()
 			approxCloseness := make([]float64, len(adjList))
 			for i := range approxCloseness {
-				approxCloseness[i] = 1.0 / (avgDistance[i] * float64(len(adjList)))
+				approxCloseness[i] = 1.0 / avgDistance[i]
 			}
 
 			// fmt.Println("C:", realCloseness[:10], approxCloseness[:10])
@@ -80,13 +80,17 @@ func ApproximateCompareNodeCentrality(adjList [][]int, pickCriteria string, real
 			jaccard1Eccentricity := utils.CompareJaccard(sliceIntToFloat(realEccentricity), sliceIntToFloat(approxEccentricity), 0.01)
 			jaccard5Eccentricity := utils.CompareJaccard(sliceIntToFloat(realEccentricity), sliceIntToFloat(approxEccentricity), 0.05)
 
-			fmt.Printf("%s;closeless;%d;%t;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f\n", graphName, iterations, wcb, mseCloseness, spearmanCloseness, pC, mseEccentricity, spearmanEccentricity, pE, jaccard1Closeness, jaccard5Closeness, jaccard1Eccentricity, jaccard5Eccentricity)
+			fmt.Printf("%s;closeless;%d;%t;%e;%e;%e;%e;%e;%e;%e;%e;%e;%e\n", graphName, iterations, wcb, mseCloseness, spearmanCloseness, pC, mseEccentricity, spearmanEccentricity, pE, jaccard1Closeness, jaccard5Closeness, jaccard1Eccentricity, jaccard5Eccentricity)
 
 		} else { // furtherBfsed
 			var distanceFromBfsedNode int
 			cornerNode, distanceFromBfsedNode = levels.GetFurtherBfsedNode()
 
-			approxCloseness, approxEccentricity := levels.GetMetrics()
+			avgDistance, approxEccentricity := levels.GetMetrics()
+			approxCloseness := make([]float64, len(adjList))
+			for i := range approxCloseness {
+				approxCloseness[i] = 1.0 / avgDistance[i]
+			}
 
 			mseCloseness := utils.CalculateMSE(realCloseness, approxCloseness)
 			mseEccentricity := utils.CalculateMSE(realEccentricity, approxEccentricity)
@@ -100,7 +104,7 @@ func ApproximateCompareNodeCentrality(adjList [][]int, pickCriteria string, real
 			jaccard1Eccentricity := utils.CompareJaccard(sliceIntToFloat(realEccentricity), sliceIntToFloat(approxEccentricity), 0.01)
 			jaccard5Eccentricity := utils.CompareJaccard(sliceIntToFloat(realEccentricity), sliceIntToFloat(approxEccentricity), 0.05)
 
-			fmt.Printf("%s;further_bfsed;%d;%d;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f\n", graphName, iterations, distanceFromBfsedNode, mseCloseness, spearmanCloseness, pC, mseEccentricity, spearmanEccentricity, pE, jaccard1Closeness, jaccard5Closeness, jaccard1Eccentricity, jaccard5Eccentricity)
+			fmt.Printf("%s;further_bfsed;%d;%d;%e;%e;%e;%e;%e;%e;%e;%e;%e;%e\n", graphName, iterations, distanceFromBfsedNode, mseCloseness, spearmanCloseness, pC, mseEccentricity, spearmanEccentricity, pE, jaccard1Closeness, jaccard5Closeness, jaccard1Eccentricity, jaccard5Eccentricity)
 		}
 	}
 	// graph;bfs_qty;MSE_closeness;spearman_closeness;spearman_p_closeness;MSE_eccentricity;spearman_eccentricity,spearman_p_eccentricity
@@ -121,7 +125,11 @@ func ApproximateCompareNodeCentralityRandom(adjList [][]int, realCloseness []flo
 
 		levels.AddLevels(foundLevels)
 
-		approxCloseness, approxEccentricity := levels.GetMetrics()
+		avgDistance, approxEccentricity := levels.GetMetrics()
+		approxCloseness := make([]float64, len(adjList))
+		for i := range approxCloseness {
+			approxCloseness[i] = 1.0 / avgDistance[i]
+		}
 
 		mseCloseness := utils.CalculateMSE(realCloseness, approxCloseness)
 		mseEccentricity := utils.CalculateMSE(realEccentricity, approxEccentricity)
@@ -135,7 +143,7 @@ func ApproximateCompareNodeCentralityRandom(adjList [][]int, realCloseness []flo
 		jaccard1Eccentricity := utils.CompareJaccard(sliceIntToFloat(realEccentricity), sliceIntToFloat(approxEccentricity), 0.01)
 		jaccard5Eccentricity := utils.CompareJaccard(sliceIntToFloat(realEccentricity), sliceIntToFloat(approxEccentricity), 0.05)
 
-		fmt.Printf("%s;random;%d;-;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f\n", graphName, iterations, mseCloseness, spearmanCloseness, pC, mseEccentricity, spearmanEccentricity, pE, jaccard1Closeness, jaccard5Closeness, jaccard1Eccentricity, jaccard5Eccentricity)
+		fmt.Printf("%s;random;%d;-;%e;%e;%e;%e;%e;%e;%e;%e;%e;%e\n", graphName, iterations, mseCloseness, spearmanCloseness, pC, mseEccentricity, spearmanEccentricity, pE, jaccard1Closeness, jaccard5Closeness, jaccard1Eccentricity, jaccard5Eccentricity)
 
 	}
 	// graph;bfs_qty;MSE_closeness;spearman_closeness;spearman_p_closeness;MSE_eccentricity;spearman_eccentricity,spearman_p_eccentricity

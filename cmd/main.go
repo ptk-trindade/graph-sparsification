@@ -17,9 +17,8 @@ func start(calculateMetrics bool) [][]int {
 
 	scanner := bufio.NewScanner(os.Stdin)
 
-	scanner.Scan()
-
-	_ = scanner.Text() //method
+	// scanner.Scan()
+	// _ = scanner.Text() //method
 
 	adjList, err := utils.ReadGraph(scanner)
 	if err != nil {
@@ -68,7 +67,7 @@ func test1(adjList [][]int) {
 	realCloseness, realEccentricity := nodecentrality.NodeClosenessAndEccentricity(adjList)
 
 	graphName := "graph_name"
-	
+
 	nodecentrality.ApproximateCompareNodeCentralityRandom(adjList, realCloseness, realEccentricity, graphName)
 	nodecentrality.ApproximateCompareNodeCentrality(adjList, "closeless", realCloseness, realEccentricity, graphName)
 	nodecentrality.ApproximateCompareNodeCentrality(adjList, "furtherBfsed", realCloseness, realEccentricity, graphName)

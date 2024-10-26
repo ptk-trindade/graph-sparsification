@@ -1,8 +1,9 @@
 package nodecentrality
 
 import (
-	"github.com/ptk-trindade/graph-sparsification/utils"
 	"math/rand"
+
+	"github.com/ptk-trindade/graph-sparsification/utils"
 )
 
 type Levels struct {
@@ -98,7 +99,7 @@ output: id of CornerNode, distance from the closer 'BFSed' node
 */
 func (lvl Levels) GetFurtherBfsedNode() (int, int) {
 	var cornerNode, closerBfsedNode, equalyCloseOptions int
-	
+
 	for node, nodeLevels := range lvl.levels {
 
 		closerBN := utils.Min(nodeLevels...)
@@ -143,15 +144,15 @@ func (lvl Levels) GetRandomNode() int {
 /* Get levels avg, max and min for every node
  */
 func (lvl Levels) GetMetrics() ([]float64, []int) {
-	avgs := make([]float64, len(lvl.levels))
+	avg := make([]float64, len(lvl.levels))
 	maxs := make([]int, len(lvl.levels))
 
 	for node, nodeLevels := range lvl.levels {
-		avgs[node] = utils.Avg(nodeLevels...)
+		avg[node] = utils.AvgWithoutZeros(nodeLevels...)
 		maxs[node] = utils.Max(nodeLevels...)
 	}
 
-	return avgs, maxs
+	return avg, maxs
 }
 
 /*
