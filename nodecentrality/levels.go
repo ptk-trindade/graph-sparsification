@@ -76,6 +76,7 @@ func (lvl Levels) GetCloselessNode() (int, bool) {
 			if avgDistance > pickingAvgDistance {
 				pickingAvgDistance = avgDistance
 				pickingNode = node
+				equalyGoodOptions = 1
 
 			} else if avgDistance == pickingAvgDistance { // a tie happened, will run the tie breaker
 				equalyGoodOptions++
