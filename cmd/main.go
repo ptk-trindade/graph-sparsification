@@ -43,8 +43,8 @@ func start(calculateMetrics bool) [][]int {
 			tmp := (float64(d) - avgDegree)
 			stdDev += tmp * tmp
 
-			minDegree = utils.Min(minDegree, d)
-			maxDegree = utils.Max(maxDegree, d)
+			minDegree = min(minDegree, d)
+			maxDegree = max(maxDegree, d)
 		}
 
 		stdDev = stdDev / float64(len(adjList))
@@ -68,10 +68,59 @@ func test1(adjList [][]int) {
 
 	graphName := "graph_name"
 
-	nodecentrality.ApproximateCompareNodeCentralityRandom(adjList, realCloseness, realEccentricity, graphName)
-	nodecentrality.ApproximateCompareNodeCentrality(adjList, "closeless", realCloseness, realEccentricity, graphName)
-	nodecentrality.ApproximateCompareNodeCentrality(adjList, "furtherBfsed", realCloseness, realEccentricity, graphName)
+	// randomCloseness := nodecentrality.NewResultDTO()
+	// randomEccentricity := nodecentrality.NewResultDTO()
 
+	resultsCloseness := make([]nodecentrality.ResultsDTO, 20)
+	resultsEccentricity := make([]nodecentrality.ResultsDTO, 20)
+
+	// random
+	for i := 0; i < 20; i++ {
+		closeness, eccentricity := nodecentrality.ApproximateCompareNodeCentralityRandom(adjList, realCloseness, realEccentricity, graphName)
+
+		resultsCloseness[i] = closeness
+		resultsEccentricity[i] = eccentricity
+	}
+	randomAvgResultCloseness := ResultsDTOAvg(resultsCloseness)
+	randomAvgResultEccentricity := ResultsDTOAvg(resultsEccentricity)
+
+	// closeless
+	for i := 0; i < 20; i++ {
+		closeness, eccentricity := nodecentrality.ApproximateCompareNodeCentrality(adjList, "closeless", realCloseness, realEccentricity, graphName)
+
+		resultsCloseness[i] = closeness
+		resultsEccentricity[i] = eccentricity
+	}
+	closelessAvgResultCloseness := ResultsDTOAvg(resultsCloseness)
+	closelessAvgResultEccentricity := ResultsDTOAvg(resultsEccentricity)
+
+	//furtherBfs
+	for i := 0; i < 20; i++ {
+		closeness, eccentricity := nodecentrality.ApproximateCompareNodeCentrality(adjList, "furtherBfsed", realCloseness, realEccentricity, graphName)
+
+		resultsCloseness[i] = closeness
+		resultsEccentricity[i] = eccentricity
+	}
+	furtherBfsAvgResultCloseness := ResultsDTOAvg(resultsCloseness)
+	furtherBfsAvgResultEccentricity := ResultsDTOAvg(resultsEccentricity)
+
+	//output
+
+}
+
+func ResultsDTOAvg(results []nodecentrality.ResultsDTO) nodecentrality.ResultsDTO {
+	n := len(results)
+	avg := NewResultDTO(len(results.Mse[0]))
+	for r := range results {
+		avg.Aux += float64(r.Aux) / n
+		avg.Mse += r.Mse / n
+		avg.SpearmanCorrelation += r.SpearmanCorrelation / n
+		avg.SpearmanP += r.SpearmanP / n
+		avg.Jaccard1percent += r.Jaccard1percent / n
+		avg.Jaccard5percent += r.Jaccard5percent / n
+	}
+
+	return avg
 }
 
 /*

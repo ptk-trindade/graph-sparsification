@@ -77,6 +77,7 @@ func (lvl Levels) GetCloselessNode() (int, bool) {
 			if avgDistance > pickingAvgDistance {
 				pickingAvgDistance = avgDistance
 				pickingNode = node
+				equalyGoodOptions = 1
 
 			} else if avgDistance == pickingAvgDistance { // a tie happened, will run the tie breaker
 				equalyGoodOptions++
@@ -102,7 +103,7 @@ func (lvl Levels) GetFurtherBfsedNode() (int, int) {
 
 	for node, nodeLevels := range lvl.levels {
 
-		closerBN := utils.Min(nodeLevels...)
+		closerBN := min(nodeLevels...)
 
 		if closerBN > closerBfsedNode {
 			cornerNode = node
@@ -149,7 +150,7 @@ func (lvl Levels) GetMetrics() ([]float64, []int) {
 
 	for node, nodeLevels := range lvl.levels {
 		avg[node] = utils.AvgWithoutZeros(nodeLevels...)
-		maxs[node] = utils.Max(nodeLevels...)
+		maxs[node] = max(nodeLevels...)
 	}
 
 	return avg, maxs

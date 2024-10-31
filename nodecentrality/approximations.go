@@ -2,11 +2,32 @@ package nodecentrality
 
 import (
 	"fmt"
+	"math/rand"
 
 	"github.com/ptk-trindade/graph-sparsification/utils"
 )
 
-// func ApproximateNodeCentrality(adjList [][]int, minIterations int, maxIterations int, pickCriteria string) ([]float64, []int) {
+type ResultsDTO struct {
+	Aux []int // wcb or closestBFS
+	Mse []float64
+	SpearmanCorrelation []float64
+	SpearmanP []float64
+	Jaccard1percent  []float64
+	Jaccard5percent  []float64
+}
+
+func NewResultDTO(n int) ResultsDTO {
+	return ResultsDTO{
+		Aux: make([]int, n),
+		Mse: make([]float64, n),
+		SpearmanCorrelation: make([]float64, n)
+		SpearmanP: make([]float64, n)
+		Jaccard1percent: make([]float64, n)
+		Jaccard5percent: make([]float64, n)
+	}
+}
+
+func ApproximateNodeCentrality(adjList [][]int, minIterations int, maxIterations int, pickCriteria string) ([]float64, []int) {
 
 // 	firstLevels := bfs(adjList, 0) // start at any vertex
 
@@ -38,14 +59,21 @@ import (
 
 func ApproximateCompareNodeCentrality(adjList [][]int, pickCriteria string, realCloseness []float64, realEccentricity []int, graphName string) {
 
-	firstLevels := bfs(adjList, 0) // start at any vertex
+	src := rand.Intn(len(adjList))
+	firstLevels := bfs(adjList, src) // start at any vertex
 
 	// find first corner
-	var cornerNode, maxLevel int
+	var cornerNode, maxLevel, equalyGoodOptions int
 	for node, level := range firstLevels {
 		if level > maxLevel {
 			maxLevel = level
 			cornerNode = node
+		} else if level == maxLevel {
+			equalyGoodOptions++
+			if rand.Intn(equalyGoodOptions) == 0 { // makes sure every node has the same probability of being chosen
+				pickingAvgDistance = avgDistance
+				pickingNode = node
+			}
 		}
 	}
 
@@ -107,11 +135,12 @@ func ApproximateCompareNodeCentrality(adjList [][]int, pickCriteria string, real
 			fmt.Printf("%s;further_bfsed;%d;%d;%e;%e;%e;%e;%e;%e;%e;%e;%e;%e\n", graphName, iterations, distanceFromBfsedNode, mseCloseness, spearmanCloseness, pC, mseEccentricity, spearmanEccentricity, pE, jaccard1Closeness, jaccard5Closeness, jaccard1Eccentricity, jaccard5Eccentricity)
 		}
 	}
-	// graph;bfs_qty;MSE_closeness;spearman_closeness;spearman_p_closeness;MSE_eccentricity;spearman_eccentricity,spearman_p_eccentricity
-
 }
 
-func ApproximateCompareNodeCentralityRandom(adjList [][]int, realCloseness []float64, realEccentricity []int, graphName string) {
+func ApproximateCompareNodeCentralityRandom(adjList [][]int, realCloseness []float64, realEccentricity []int, graphName string) (ResultsDTO, ResultsDTO) {
+	
+	resultCloseness := NewResultDTO(len(adjList))
+	resultEccentricity := NewResultDTO(len(adjList))
 
 	nodeIdxes := make([]int, len(adjList))
 	for i := range nodeIdxes {
@@ -142,12 +171,23 @@ func ApproximateCompareNodeCentralityRandom(adjList [][]int, realCloseness []flo
 
 		jaccard1Eccentricity := utils.CompareJaccard(sliceIntToFloat(realEccentricity), sliceIntToFloat(approxEccentricity), 0.01)
 		jaccard5Eccentricity := utils.CompareJaccard(sliceIntToFloat(realEccentricity), sliceIntToFloat(approxEccentricity), 0.05)
+		
+		resultCloseness.Mse[iterations] = mseCloseness
+		resultCloseness.SpearmanCorrelation[iterations] = spearmanCloseness
+		resultCloseness.SpearmanP[iterations] = pC
+		resultCloseness.Jaccard1percent[iterations] = jaccard1Closeness
+		resultCloseness.Jaccard5percent[iterations] = jaccard5Closeness
 
-		fmt.Printf("%s;random;%d;-;%e;%e;%e;%e;%e;%e;%e;%e;%e;%e\n", graphName, iterations, mseCloseness, spearmanCloseness, pC, mseEccentricity, spearmanEccentricity, pE, jaccard1Closeness, jaccard5Closeness, jaccard1Eccentricity, jaccard5Eccentricity)
-
+		resultEccentricity.Mse[iterations] = mseEccentricity
+		resultEccentricity.SpearmanCorrelation[iterations] = spearmanEccentricity
+		resultEccentricity.SpearmanP[iterations] = pE
+		resultEccentricity.Jaccard1percent[iterations] = jaccard1Eccentricity
+		resultEccentricity.Jaccard5percent[iterations] = jaccard5Eccentricity
+		
 	}
 	// graph;bfs_qty;MSE_closeness;spearman_closeness;spearman_p_closeness;MSE_eccentricity;spearman_eccentricity,spearman_p_eccentricity
 
+	return resultCloseness, resultEccentricity
 }
 
 func sliceIntToFloat(slice []int) []float64 {

@@ -62,7 +62,7 @@ def print_degree_statistics(degrees):
     print(f"Maximum degree: {max_degree}")
 
 def main():
-    input_file = r'C:\Users\Ptk\graph-sparsification\txtFiles\inputs\erdosRenyi\redosErni_4000.txt'
+    input_file = r'txtFiles\inputs\real_graphs\CA-GrQc.txt'
 
     num_nodes, edges = read_graph(input_file)
 
