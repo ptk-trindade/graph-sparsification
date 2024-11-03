@@ -59,69 +59,248 @@ func start(calculateMetrics bool) [][]int {
 func main() {
 	adjList := start(false)
 
-	test1(adjList)
+	sampleSizes := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 25, 26, 27, 28, 30, 31, 33, 34, 36, 38, 39, 41, 43, 45, 47, 50, 52, 54, 57, 60, 63, 66, 69, 72, 75, 79, 83, 87, 91, 95, 100, 104, 109, 114, 120, 125, 131, 138, 144, 151, 158, 165, 173, 181, 190, 199, 208, 218, 229, 239, 251, 263, 275, 288, 301, 316, 331, 346, 363, 380, 398, 416, 436, 457, 478, 501, 524, 549, 575, 602, 630, 660, 691, 724, 758, 794, 831, 870, 912, 954, 1000, 1047, 1096, 1148, 1202, 1258, 1318, 1380, 1445, 1513, 1584, 1659, 1737, 1819, 1905, 1995, 2089, 2187, 2290, 2398, 2511, 2630, 2754, 2884, 3019, 3162, 3311, 3467, 3630, 3801, 3981, len(adjList)}
+	nRuns := 20
+	fmt.Println("\n ----- CLOSENESS -----")
+	compareCloseness(adjList, sampleSizes, nRuns)
+	fmt.Println("\n ----- ECCENTRICITY -----")
+	compareEccentricity(adjList, sampleSizes, nRuns)
 }
 
-func test1(adjList [][]int) {
-
-	realCloseness, realEccentricity := nodecentrality.NodeClosenessAndEccentricity(adjList)
-
-	graphName := "graph_name"
-
-	// randomCloseness := nodecentrality.NewResultDTO()
-	// randomEccentricity := nodecentrality.NewResultDTO()
-
-	resultsCloseness := make([]nodecentrality.ResultsDTO, 20)
-	resultsEccentricity := make([]nodecentrality.ResultsDTO, 20)
-
-	// random
-	for i := 0; i < 20; i++ {
-		closeness, eccentricity := nodecentrality.ApproximateCompareNodeCentralityRandom(adjList, realCloseness, realEccentricity, graphName)
-
-		resultsCloseness[i] = closeness
-		resultsEccentricity[i] = eccentricity
-	}
-	randomAvgResultCloseness := ResultsDTOAvg(resultsCloseness)
-	randomAvgResultEccentricity := ResultsDTOAvg(resultsEccentricity)
-
-	// closeless
-	for i := 0; i < 20; i++ {
-		closeness, eccentricity := nodecentrality.ApproximateCompareNodeCentrality(adjList, "closeless", realCloseness, realEccentricity, graphName)
-
-		resultsCloseness[i] = closeness
-		resultsEccentricity[i] = eccentricity
-	}
-	closelessAvgResultCloseness := ResultsDTOAvg(resultsCloseness)
-	closelessAvgResultEccentricity := ResultsDTOAvg(resultsEccentricity)
-
-	//furtherBfs
-	for i := 0; i < 20; i++ {
-		closeness, eccentricity := nodecentrality.ApproximateCompareNodeCentrality(adjList, "furtherBfsed", realCloseness, realEccentricity, graphName)
-
-		resultsCloseness[i] = closeness
-		resultsEccentricity[i] = eccentricity
-	}
-	furtherBfsAvgResultCloseness := ResultsDTOAvg(resultsCloseness)
-	furtherBfsAvgResultEccentricity := ResultsDTOAvg(resultsEccentricity)
-
-	//output
-
+type functionResults struct {
+	expectedMse []float64
+	mse         []float64
+	spCor       []float64
+	Jcc1        []float64
+	Jcc5        []float64
 }
 
-func ResultsDTOAvg(results []nodecentrality.ResultsDTO) nodecentrality.ResultsDTO {
-	n := len(results)
-	avg := NewResultDTO(len(results.Mse[0]))
-	for r := range results {
-		avg.Aux += float64(r.Aux) / n
-		avg.Mse += r.Mse / n
-		avg.SpearmanCorrelation += r.SpearmanCorrelation / n
-		avg.SpearmanP += r.SpearmanP / n
-		avg.Jaccard1percent += r.Jaccard1percent / n
-		avg.Jaccard5percent += r.Jaccard5percent / n
+func compareCloseness(adjList [][]int, sampleSizes []int, nRuns int) {
+
+	methods := []func([][]int, int) ([]nodecentrality.ClosenessNode, float64){
+		nodecentrality.ApproximateClosenessCloseless,
+		nodecentrality.ApproximateClosenessFurtherBfs,
+		nodecentrality.ApproximateClosenessRandom,
 	}
 
-	return avg
+	realCloseness := nodecentrality.NodeCloseness(adjList)
+	tableVals := make([]functionResults, len(methods))
+
+	for methodI, method := range methods {
+		expectedMse := make([]float64, len(sampleSizes))
+		mse := make([]float64, len(sampleSizes))
+		spCor := make([]float64, len(sampleSizes))
+		Jcc1 := make([]float64, len(sampleSizes))
+		Jcc5 := make([]float64, len(sampleSizes))
+
+		for ssI, nSamples := range sampleSizes {
+			// start := time.Now()
+			for i := 0; i < nRuns; i++ {
+				approxClosenessNodes, expMse := method(adjList, nSamples)
+
+				approxCloseness := make([]float64, len(approxClosenessNodes))
+				for i, node := range approxClosenessNodes {
+					if node.CloserBfs == 0 {
+						approxCloseness[i] = node.RealCloseness
+					} else {
+						approxCloseness[i] = node.ExpectedCloseness
+					}
+				}
+
+				expectedMse[ssI] += expMse / float64(nRuns)
+
+				realMse := utils.CalculateMSE(approxCloseness, realCloseness)
+				mse[ssI] += realMse / float64(nRuns)
+
+				currSpCor, _ := utils.CompareSpearman(approxCloseness, realCloseness)
+				spCor[ssI] += currSpCor / float64(nRuns)
+
+				currJc1 := utils.CompareJaccard(approxCloseness, realCloseness, 0.01)
+				Jcc1[ssI] += currJc1 / float64(nRuns)
+
+				currJc5 := utils.CompareJaccard(approxCloseness, realCloseness, 0.05)
+				Jcc5[ssI] += currJc5 / float64(nRuns)
+
+			}
+			// elapsed := time.Since(start)
+			// fmt.Printf("%d took: %s\n", nSamples, elapsed)
+		}
+
+		tableVals[methodI] = functionResults{
+			expectedMse: expectedMse,
+			mse:         mse,
+			spCor:       spCor,
+			Jcc1:        Jcc1,
+			Jcc5:        Jcc5,
+		}
+
+	}
+
+	fmt.Println(";Closeless;Further BFS;Random")
+
+	fmt.Print("nSamples")
+	fmt.Print(";Expected MSE;MSE;Spearman Correlation;Jaccard 1%;Jaccard 5%")
+	fmt.Print(";Expected MSE;MSE;Spearman Correlation;Jaccard 1%;Jaccard 5%")
+	fmt.Print(";Expected MSE;MSE;Spearman Correlation;Jaccard 1%;Jaccard 5%")
+	fmt.Println()
+
+	for ssI, ss := range sampleSizes {
+		fmt.Print(ss, ";")
+		for methodI := 0; methodI < len(methods); methodI++ {
+			fmt.Print(tableVals[methodI].expectedMse[ssI], ";")
+			fmt.Print(tableVals[methodI].mse[ssI], ";")
+			fmt.Print(tableVals[methodI].spCor[ssI], ";")
+			fmt.Print(tableVals[methodI].Jcc1[ssI], ";")
+			fmt.Print(tableVals[methodI].Jcc5[ssI], ";")
+		}
+		fmt.Println()
+	}
 }
+
+func compareEccentricity(adjList [][]int, sampleSizes []int, nRuns int) {
+
+	methods := []func([][]int, int) ([]nodecentrality.EccentricityNode, float64){
+		nodecentrality.ApproximateEccentricityCloseless,
+		nodecentrality.ApproximateEccentricityFurtherBfs,
+		nodecentrality.ApproximateEccentricityRandom,
+	}
+
+	realEccentricityInt := nodecentrality.NodeEccentricity(adjList)
+	realEccentricity := make([]float64, len(realEccentricityInt))
+	for i, val := range realEccentricityInt {
+		realEccentricity[i] = float64(val)
+	}
+
+	tableVals := make([]functionResults, len(methods))
+
+	for methodI, method := range methods {
+		expectedMse := make([]float64, len(sampleSizes))
+		mse := make([]float64, len(sampleSizes))
+		spCor := make([]float64, len(sampleSizes))
+		Jcc1 := make([]float64, len(sampleSizes))
+		Jcc5 := make([]float64, len(sampleSizes))
+
+		for ssI, nSamples := range sampleSizes {
+			for i := 0; i < nRuns; i++ {
+				approxEccentricityNodes, expMse := method(adjList, nSamples)
+
+				approxEccentricity := make([]float64, len(approxEccentricityNodes))
+				for i, node := range approxEccentricityNodes {
+					if node.CloserBfs == 0 {
+						approxEccentricity[i] = float64(node.RealEccentricity)
+					} else {
+						approxEccentricity[i] = float64(node.ExpectedEccentricity)
+					}
+				}
+
+				expectedMse[ssI] += expMse / float64(nRuns)
+
+				realMse := utils.CalculateMSE(approxEccentricity, realEccentricity)
+				mse[ssI] += float64(realMse) / float64(nRuns)
+
+				currSpCor, _ := utils.CompareSpearman(approxEccentricity, realEccentricity)
+				spCor[ssI] += currSpCor / float64(nRuns)
+
+				currJc1 := utils.CompareJaccard(approxEccentricity, realEccentricity, 0.01)
+				Jcc1[ssI] += currJc1 / float64(nRuns)
+
+				currJc5 := utils.CompareJaccard(approxEccentricity, realEccentricity, 0.05)
+				Jcc5[ssI] += currJc5 / float64(nRuns)
+
+			}
+		}
+
+		tableVals[methodI] = functionResults{
+			expectedMse: expectedMse,
+			mse:         mse,
+			spCor:       spCor,
+			Jcc1:        Jcc1,
+			Jcc5:        Jcc5,
+		}
+
+	}
+
+	fmt.Println("Closeless;Further BFS;Random")
+
+	fmt.Print("nSamples")
+	fmt.Print(";Expected MSE;MSE;Spearman Correlation;Jaccard 1%;Jaccard 5%")
+	fmt.Print(";Expected MSE;MSE;Spearman Correlation;Jaccard 1%;Jaccard 5%")
+	fmt.Print(";Expected MSE;MSE;Spearman Correlation;Jaccard 1%;Jaccard 5%")
+	fmt.Println()
+
+	for ssI, ss := range sampleSizes {
+		fmt.Print(ss, ";")
+		for methodI := 0; methodI < len(methods); methodI++ {
+			fmt.Print(tableVals[methodI].expectedMse[ssI], ";")
+			fmt.Print(tableVals[methodI].mse[ssI], ";")
+			fmt.Print(tableVals[methodI].spCor[ssI], ";")
+			fmt.Print(tableVals[methodI].Jcc1[ssI], ";")
+			fmt.Print(tableVals[methodI].Jcc5[ssI], ";")
+		}
+		fmt.Println()
+	}
+}
+
+// func test1(adjList [][]int) {
+
+// 	realCloseness, realEccentricity := nodecentrality.NodeClosenessAndEccentricity(adjList)
+
+// 	graphName := "graph_name"
+
+// 	// randomCloseness := nodecentrality.NewResultDTO()
+// 	// randomEccentricity := nodecentrality.NewResultDTO()
+
+// 	resultsCloseness := make([]nodecentrality.ResultsDTO, 20)
+// 	resultsEccentricity := make([]nodecentrality.ResultsDTO, 20)
+
+// 	// random
+// 	for i := 0; i < 20; i++ {
+// 		closeness, eccentricity := nodecentrality.ApproximateCompareNodeCentralityRandom(adjList, realCloseness, realEccentricity, graphName)
+
+// 		resultsCloseness[i] = closeness
+// 		resultsEccentricity[i] = eccentricity
+// 	}
+// 	randomAvgResultCloseness := ResultsDTOAvg(resultsCloseness)
+// 	randomAvgResultEccentricity := ResultsDTOAvg(resultsEccentricity)
+
+// 	// closeless
+// 	for i := 0; i < 20; i++ {
+// 		closeness, eccentricity := nodecentrality.ApproximateCompareNodeCentrality(adjList, "closeless", realCloseness, realEccentricity, graphName)
+
+// 		resultsCloseness[i] = closeness
+// 		resultsEccentricity[i] = eccentricity
+// 	}
+// 	closelessAvgResultCloseness := ResultsDTOAvg(resultsCloseness)
+// 	closelessAvgResultEccentricity := ResultsDTOAvg(resultsEccentricity)
+
+// 	//furtherBfs
+// 	for i := 0; i < 20; i++ {
+// 		closeness, eccentricity := nodecentrality.ApproximateCompareNodeCentrality(adjList, "furtherBfsed", realCloseness, realEccentricity, graphName)
+
+// 		resultsCloseness[i] = closeness
+// 		resultsEccentricity[i] = eccentricity
+// 	}
+// 	furtherBfsAvgResultCloseness := ResultsDTOAvg(resultsCloseness)
+// 	furtherBfsAvgResultEccentricity := ResultsDTOAvg(resultsEccentricity)
+
+// 	//output
+
+// }
+
+// func ResultsDTOAvg(results []nodecentrality.ResultsDTO) nodecentrality.ResultsDTO {
+// 	n := len(results)
+// 	avg := NewResultDTO(len(results.Mse[0]))
+// 	for _, r := range results {
+// 		avg.Aux += float64(r.Aux) / n
+// 		avg.Mse += r.Mse / n
+// 		avg.SpearmanCorrelation += r.SpearmanCorrelation / n
+// 		avg.SpearmanP += r.SpearmanP / n
+// 		avg.Jaccard1percent += r.Jaccard1percent / n
+// 		avg.Jaccard5percent += r.Jaccard5percent / n
+// 	}
+
+// 	return avg
+// }
 
 /*
 	randFloats := make([]float64, len(adjList))

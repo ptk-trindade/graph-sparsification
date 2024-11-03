@@ -8,26 +8,26 @@ import (
 )
 
 type ResultsDTO struct {
-	Aux []int // wcb or closestBFS
-	Mse []float64
+	Aux                 []int // wcb or closestBFS
+	Mse                 []float64
 	SpearmanCorrelation []float64
-	SpearmanP []float64
-	Jaccard1percent  []float64
-	Jaccard5percent  []float64
+	SpearmanP           []float64
+	Jaccard1percent     []float64
+	Jaccard5percent     []float64
 }
 
 func NewResultDTO(n int) ResultsDTO {
 	return ResultsDTO{
-		Aux: make([]int, n),
-		Mse: make([]float64, n),
-		SpearmanCorrelation: make([]float64, n)
-		SpearmanP: make([]float64, n)
-		Jaccard1percent: make([]float64, n)
-		Jaccard5percent: make([]float64, n)
+		Aux:                 make([]int, n),
+		Mse:                 make([]float64, n),
+		SpearmanCorrelation: make([]float64, n),
+		SpearmanP:           make([]float64, n),
+		Jaccard1percent:     make([]float64, n),
+		Jaccard5percent:     make([]float64, n),
 	}
 }
 
-func ApproximateNodeCentrality(adjList [][]int, minIterations int, maxIterations int, pickCriteria string) ([]float64, []int) {
+// func ApproximateNodeCentrality(adjList [][]int, minIterations int, maxIterations int, pickCriteria string) ([]float64, []int) {
 
 // 	firstLevels := bfs(adjList, 0) // start at any vertex
 
@@ -71,8 +71,8 @@ func ApproximateCompareNodeCentrality(adjList [][]int, pickCriteria string, real
 		} else if level == maxLevel {
 			equalyGoodOptions++
 			if rand.Intn(equalyGoodOptions) == 0 { // makes sure every node has the same probability of being chosen
-				pickingAvgDistance = avgDistance
-				pickingNode = node
+				maxLevel = level
+				cornerNode = node
 			}
 		}
 	}
@@ -138,7 +138,7 @@ func ApproximateCompareNodeCentrality(adjList [][]int, pickCriteria string, real
 }
 
 func ApproximateCompareNodeCentralityRandom(adjList [][]int, realCloseness []float64, realEccentricity []int, graphName string) (ResultsDTO, ResultsDTO) {
-	
+
 	resultCloseness := NewResultDTO(len(adjList))
 	resultEccentricity := NewResultDTO(len(adjList))
 
@@ -171,7 +171,7 @@ func ApproximateCompareNodeCentralityRandom(adjList [][]int, realCloseness []flo
 
 		jaccard1Eccentricity := utils.CompareJaccard(sliceIntToFloat(realEccentricity), sliceIntToFloat(approxEccentricity), 0.01)
 		jaccard5Eccentricity := utils.CompareJaccard(sliceIntToFloat(realEccentricity), sliceIntToFloat(approxEccentricity), 0.05)
-		
+
 		resultCloseness.Mse[iterations] = mseCloseness
 		resultCloseness.SpearmanCorrelation[iterations] = spearmanCloseness
 		resultCloseness.SpearmanP[iterations] = pC
@@ -183,7 +183,7 @@ func ApproximateCompareNodeCentralityRandom(adjList [][]int, realCloseness []flo
 		resultEccentricity.SpearmanP[iterations] = pE
 		resultEccentricity.Jaccard1percent[iterations] = jaccard1Eccentricity
 		resultEccentricity.Jaccard5percent[iterations] = jaccard5Eccentricity
-		
+
 	}
 	// graph;bfs_qty;MSE_closeness;spearman_closeness;spearman_p_closeness;MSE_eccentricity;spearman_eccentricity,spearman_p_eccentricity
 

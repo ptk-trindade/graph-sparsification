@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"cmp"
 	"fmt"
 	"math/rand"
 )
@@ -34,7 +35,7 @@ func CalculateMSE[E Number](slice1, slice2 []E) float64 {
 	return mse
 }
 
-func Max[E Number](vals ...E) E {
+func Max[E cmp.Ordered](vals ...E) E {
 	maxVal := vals[0]
 	for _, val := range vals {
 		if val > maxVal {
@@ -44,7 +45,7 @@ func Max[E Number](vals ...E) E {
 	return maxVal
 }
 
-func Min[E Number](vals ...E) E {
+func Min[E cmp.Ordered](vals ...E) E {
 	minVal := vals[0]
 	for _, val := range vals {
 		if val < minVal {

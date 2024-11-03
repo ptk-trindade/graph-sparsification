@@ -103,7 +103,7 @@ func (lvl Levels) GetFurtherBfsedNode() (int, int) {
 
 	for node, nodeLevels := range lvl.levels {
 
-		closerBN := min(nodeLevels...)
+		closerBN := utils.Min(nodeLevels...)
 
 		if closerBN > closerBfsedNode {
 			cornerNode = node
@@ -150,7 +150,7 @@ func (lvl Levels) GetMetrics() ([]float64, []int) {
 
 	for node, nodeLevels := range lvl.levels {
 		avg[node] = utils.AvgWithoutZeros(nodeLevels...)
-		maxs[node] = max(nodeLevels...)
+		maxs[node] = utils.Max(nodeLevels...)
 	}
 
 	return avg, maxs
