@@ -92,3 +92,43 @@ func topKIndexes(slice []float64, topK float64) map[int]bool {
 
 	return topIndexes
 }
+
+/* Get the top nodes from each metric and returns size(A ∩ B)/size(A ∪ B)
+ */
+func CompareJaccardBottom(metric1 []float64, metric2 []float64, bottomK float64) float64 {
+	if len(metric1) != len(metric2) {
+		fmt.Println("Error CompareJaccard: metrics should have same length")
+		return 0.0
+	}
+
+	threshold1 := findBottomKThreshold(metric1, bottomK)
+	threshold2 := findBottomKThreshold(metric2, bottomK)
+
+	// get the intersection
+	var intersection, union int
+	for i := range metric1 {
+		isInBottom1 := metric1[i] <= threshold1
+		isInBottom2 := metric2[i] <= threshold2
+
+		if isInBottom1 || isInBottom2 { // at least one number is high
+			union++
+			if isInBottom1 && isInBottom2 { // both numbers are high
+				intersection++
+			}
+		}
+	}
+
+	return float64(intersection) / float64(union)
+}
+
+func findBottomKThreshold(slice []float64, bottomK float64) float64 {
+	copiedSlice := make([]float64, len(slice))
+	copy(copiedSlice, slice)
+
+	sort.Float64s(copiedSlice)
+	n := len(copiedSlice)
+	bottomKIndex := int(float64(n) * bottomK)
+
+	threshold := copiedSlice[bottomKIndex]
+	return threshold
+}

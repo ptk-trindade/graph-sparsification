@@ -1,7 +1,7 @@
 from scipy.stats import spearmanr
 
 import csv
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import networkit as nk
 import numpy as np
 import time
@@ -122,7 +122,45 @@ def compare(name, path):
 
     write_lists_to_file([sampleSizes,mse_values,spearman_values,jaccard1_values,jaccard5_values], f"networkit_{name}.csv")
 
+
+
+def benchmark(graph, sampleSizes, nRuns, epsilon=0.01, normalized=True):
+    for nSamples in sampleSizes:
+        times = []
+        for _ in range(nRuns):
+            start = time.time()
+            
+            # Run ApproxCloseness with nSamples
+            approx_closeness = nk.centrality.ApproxCloseness(graph, nSamples, epsilon, normalized, nk.centrality.ClosenessType.OUTBOUND)
+            approx_closeness.run()
+            approx_closeness_scores = approx_closeness.scores()  # Get scores for each node
+
+            elapsed = (time.time() - start) * 1000  # Convert to nanoseconds
+            times.append(elapsed)
+        
+        avg = np.mean(times)
+        stddev = np.std(times)
+        print(f"Samples: {nSamples}, Average Time: {avg:.2f} ± {stddev:.2f} ms")
+
+
 compare("erdos", r"txtFiles\inputs\erdosRenyi\erdosRenyi_4000.txt")
 compare("collab", r"txtFiles\inputs\real_graphs\CA-GrQc.txt")
 compare("facebook", r"txtFiles/inputs/real_graphs/facebook.txt")
 compare("erdos", r"")
+
+
+
+sampleSizes = [100, 500, 1000]
+nRuns = 20
+
+graph = load_graph_from_file(r"txtFiles\inputs\erdosRenyi\erdosRenyi_4000.txt")
+benchmark(graph, sampleSizes, nRuns)
+
+graph = load_graph_from_file(r"txtFiles\inputs\real_graphs\CA-GrQc.txt")
+benchmark(graph, sampleSizes, nRuns)
+
+graph = load_graph_from_file(path)
+benchmark(graph, sampleSizes, nRuns)
+
+graph = load_graph_from_file(path)
+benchmark(graph, sampleSizes, nRuns)

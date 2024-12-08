@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"time"
 
 	// "github.com/ptk-trindade/graph-sparsification/edgebetweenness"
 	// "github.com/ptk-trindade/graph-sparsification/effectiveresistance"
@@ -59,12 +60,78 @@ func start(calculateMetrics bool) [][]int {
 func main() {
 	adjList := start(false)
 
+	// sampleSizes := []int{100, 500, 1000}
 	sampleSizes := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 25, 26, 27, 28, 30, 31, 33, 34, 36, 38, 39, 41, 43, 45, 47, 50, 52, 54, 57, 60, 63, 66, 69, 72, 75, 79, 83, 87, 91, 95, 100, 104, 109, 114, 120, 125, 131, 138, 144, 151, 158, 165, 173, 181, 190, 199, 208, 218, 229, 239, 251, 263, 275, 288, 301, 316, 331, 346, 363, 380, 398, 416, 436, 457, 478, 501, 524, 549, 575, 602, 630, 660, 691, 724, 758, 794, 831, 870, 912, 954, 1000, 1047, 1096, 1148, 1202, 1258, 1318, 1380, 1445, 1513, 1584, 1659, 1737, 1819, 1905, 1995, 2089, 2187, 2290, 2398, 2511, 2630, 2754, 2884, 3019, 3162, 3311, 3467, 3630, 3801, 3981, len(adjList)}
 	nRuns := 20
-	fmt.Println("\n ----- CLOSENESS -----")
-	compareCloseness(adjList, sampleSizes, nRuns)
-	fmt.Println("\n ----- ECCENTRICITY -----")
 	compareEccentricity(adjList, sampleSizes, nRuns)
+}
+
+// Helper function to calculate the average of a slice of floats
+func average(times []float64) float64 {
+	var sum float64
+	for _, time := range times {
+		sum += time
+	}
+	return sum / float64(len(times))
+}
+
+// Helper function to calculate the standard deviation of a slice of floats
+func stdDev(times []float64, avg float64) float64 {
+	var sum float64
+	for _, time := range times {
+		sum += math.Pow(time-avg, 2)
+	}
+	return math.Sqrt(sum / float64(len(times)))
+}
+
+func benchmark(adjList [][]int, sampleSizes []int, nRuns int) {
+	// CLOSENESS
+	fmt.Println("Closeness")
+	methodsCloseness := []func([][]int, int) ([]nodecentrality.ClosenessNode, float64){
+		nodecentrality.ApproximateClosenessCloseless,
+		nodecentrality.ApproximateClosenessFurtherBfs,
+		nodecentrality.ApproximateClosenessRandom,
+	}
+
+	for methodI, method := range methodsCloseness {
+		for _, nSamples := range sampleSizes {
+			var times []float64
+			for i := 0; i < nRuns; i++ {
+				start := time.Now()
+				method(adjList, nSamples)
+				elapsed := time.Since(start).Seconds() * 1000 // Convert to miliseconds for precision
+				times = append(times, elapsed)
+			}
+
+			avg := average(times)
+			stddev := stdDev(times, avg)
+			fmt.Printf("Method %d > Samples: %d, Average Time: %.2f ± %.2f ms\n", methodI, nSamples, avg, stddev)
+		}
+	}
+
+	// ECCENTRICITY
+	fmt.Println("Eccentricity")
+	methodsEccentricity := []func([][]int, int) ([]nodecentrality.EccentricityNode, float64){
+		nodecentrality.ApproximateEccentricityCloseless,
+		nodecentrality.ApproximateEccentricityFurtherBfs,
+		nodecentrality.ApproximateEccentricityRandom,
+	}
+
+	for methodI, method := range methodsEccentricity {
+		for _, nSamples := range sampleSizes {
+			var times []float64
+			for i := 0; i < nRuns; i++ {
+				start := time.Now()
+				method(adjList, nSamples)
+				elapsed := time.Since(start).Seconds() * 1e9 // Convert to nanoseconds
+				times = append(times, elapsed)
+			}
+
+			avg := average(times)
+			stddev := stdDev(times, avg)
+			fmt.Printf("Method %d > Samples: %d, Average Time: %.2f ± %.2f ns\n", methodI, nSamples, avg, stddev)
+		}
+	}
 }
 
 type functionResults struct {
@@ -201,10 +268,10 @@ func compareEccentricity(adjList [][]int, sampleSizes []int, nRuns int) {
 				currSpCor, _ := utils.CompareSpearman(approxEccentricity, realEccentricity)
 				spCor[ssI] += currSpCor / float64(nRuns)
 
-				currJc1 := utils.CompareJaccard(approxEccentricity, realEccentricity, 0.01)
+				currJc1 := utils.CompareJaccardBottom(approxEccentricity, realEccentricity, 0.01)
 				Jcc1[ssI] += currJc1 / float64(nRuns)
 
-				currJc5 := utils.CompareJaccard(approxEccentricity, realEccentricity, 0.05)
+				currJc5 := utils.CompareJaccardBottom(approxEccentricity, realEccentricity, 0.05)
 				Jcc5[ssI] += currJc5 / float64(nRuns)
 
 			}
