@@ -84,7 +84,7 @@ def compare(name, path):
 
 
     n = graph.numberOfNodes()
-    intervals = [(1, 100, 1), (100, 1000, 10), (1000, n, 100), (n, n+1, 1)]
+    # intervals = [(1, 100, 1), (100, 1000, 10), (1000, n, 100), (n, n+1, 1)]
     sampleSizes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 25, 26, 27, 28, 30, 31, 33, 34, 36, 38, 39, 41, 43, 45, 47, 50, 52, 54, 57, 60, 63, 66, 69, 72, 75, 79, 83, 87, 91, 95, 100, 104, 109, 114, 120, 125, 131, 138, 144, 151, 158, 165, 173, 181, 190, 199, 208, 218, 229, 239, 251, 263, 275, 288, 301, 316, 331, 346, 363, 380, 398, 416, 436, 457, 478, 501, 524, 549, 575, 602, 630, 660, 691, 724, 758, 794, 831, 870, 912, 954, 1000, 1047, 1096, 1148, 1202, 1258, 1318, 1380, 1445, 1513, 1584, 1659, 1737, 1819, 1905, 1995, 2089, 2187, 2290, 2398, 2511, 2630, 2754, 2884, 3019, 3162, 3311, 3467, 3630, 3801, 3981, n]
     nRuns = 20
 
@@ -143,24 +143,27 @@ def benchmark(graph, sampleSizes, nRuns, epsilon=0.01, normalized=True):
         print(f"Samples: {nSamples}, Average Time: {avg:.2f} ± {stddev:.2f} ms")
 
 
-compare("erdos", r"txtFiles\inputs\erdosRenyi\erdosRenyi_4000.txt")
-compare("collab", r"txtFiles\inputs\real_graphs\CA-GrQc.txt")
-compare("facebook", r"txtFiles/inputs/real_graphs/facebook.txt")
-compare("erdos", r"")
-
+# compare("erdos", r"txtFiles/inputs/erdosRenyi/erdosRenyi_4000.txt")
+# compare("collab", r"txtFiles/inputs/real_graphs/CA-GrQc.txt")
+# compare("facebook", r"txtFiles/inputs/real_graphs/facebook.txt")
+# compare("abcd", r"txtFiles/inputs/ABCommunityD/abcd_graph.txt")
 
 
 sampleSizes = [100, 500, 1000]
 nRuns = 20
 
-graph = load_graph_from_file(r"txtFiles\inputs\erdosRenyi\erdosRenyi_4000.txt")
+print("erdos")
+graph = load_graph_from_file(r"txtFiles/inputs/erdosRenyi/erdosRenyi.txt")
 benchmark(graph, sampleSizes, nRuns)
 
-graph = load_graph_from_file(r"txtFiles\inputs\real_graphs\CA-GrQc.txt")
+print("collab")
+graph = load_graph_from_file(r"txtFiles/inputs/real_graphs/CA-GrQc.txt")
 benchmark(graph, sampleSizes, nRuns)
 
-graph = load_graph_from_file(path)
+print("abcd")
+graph = load_graph_from_file(r"txtFiles/inputs/ABCommunityD/abcd_graph.txt")
 benchmark(graph, sampleSizes, nRuns)
 
-graph = load_graph_from_file(path)
+print("fb")
+graph = load_graph_from_file(r"txtFiles/inputs/real_graphs/facebook.txt")
 benchmark(graph, sampleSizes, nRuns)

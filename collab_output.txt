@@ -1,0 +1,20 @@
+Closeness
+Method 0 > Samples: 100, Average Time: 11.19 ± 0.58 ms
+Method 0 > Samples: 500, Average Time: 55.59 ± 1.39 ms
+Method 0 > Samples: 1000, Average Time: 111.21 ± 3.68 ms
+Method 1 > Samples: 100, Average Time: 11.28 ± 0.53 ms
+Method 1 > Samples: 500, Average Time: 56.71 ± 1.43 ms
+Method 1 > Samples: 1000, Average Time: 116.95 ± 3.35 ms
+Method 2 > Samples: 100, Average Time: 11.30 ± 0.71 ms
+Method 2 > Samples: 500, Average Time: 53.75 ± 1.63 ms
+Method 2 > Samples: 1000, Average Time: 106.19 ± 2.21 ms
+Eccentricity
+Method 0 > Samples: 100, Average Time: 11316712.85 ± 355491.48 ns
+Method 0 > Samples: 500, Average Time: 55499868.50 ± 1327401.25 ns
+Method 0 > Samples: 1000, Average Time: 114779292.30 ± 7183337.54 ns
+Method 1 > Samples: 100, Average Time: 11660889.20 ± 642963.51 ns
+Method 1 > Samples: 500, Average Time: 58359928.55 ± 2913886.73 ns
+Method 1 > Samples: 1000, Average Time: 122539480.30 ± 5594116.92 ns
+Method 2 > Samples: 100, Average Time: 11275712.65 ± 620575.81 ns
+Method 2 > Samples: 500, Average Time: 56094289.30 ± 1223004.89 ns
+Method 2 > Samples: 1000, Average Time: 122713982.35 ± 17255923.13 ns

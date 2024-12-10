@@ -39,7 +39,64 @@ def find_components(num_nodes, edges):
             components.append(component_size)
 
     return components
+
+
+# Function to compute the diameter of the graph
+def graph_diameter(num_nodes, edges):
+    from collections import deque
+
+    def bfs(graph, start_node, num_nodes):
+        distances = [-1] * num_nodes  # Initialize distances as -1 (unreachable)
+        distances[start_node] = 0  # Distance to itself is 0
+        queue = deque([start_node])
+        
+        while queue:
+            node = queue.popleft()
+            
+            for neighbor in graph[node]:
+                if distances[neighbor] == -1:  # If the neighbor hasn't been visited
+                    distances[neighbor] = distances[node] + 1
+                    queue.append(neighbor)
+        
+        return distances
     
+    # Step 1: Convert edge list to adjacency list
+    graph = {i: set() for i in range(num_nodes)}
+    for u, v in edges:
+        graph[u].add(v)
+        graph[v].add(u)
+    
+    # Step 2: Use BFS to compute the shortest paths from each node and find the longest shortest path
+    max_distance = 0
+    
+    for node in range(num_nodes):
+        distances = bfs(graph, node, num_nodes)
+        # Get the maximum distance from the current node
+        # (excluding -1 values as they represent unreachable nodes)
+        max_distance = max(max_distance, max(d for d in distances if d != -1))
+    
+    return max_distance
+    
+
+def count_triangles(num_nodes, edges):
+    # Step 1: Convert the edge list to an adjacency list
+    graph = {i: set() for i in range(num_nodes)}  # Create an empty graph with `num_nodes` nodes
+    for u, v in edges:
+        graph[u].add(v)
+        graph[v].add(u)
+    
+    # Step 2: Count triangles
+    triangle_count = 0
+    # Iterate through all edges (u, v), with u < v to avoid double counting
+    for u, v in edges:
+        if u < v:  # Ensure each triangle is counted once
+            # Find the intersection of neighbors of u and v
+            common_neighbors = graph[u].intersection(graph[v])
+            # The number of common neighbors is the number of triangles
+            triangle_count += len(common_neighbors)
+    
+    return triangle_count
+
 
 def compute_degrees(num_nodes, edges):
     degrees = [0] * num_nodes
@@ -48,6 +105,7 @@ def compute_degrees(num_nodes, edges):
         degrees[node2] += 1
 
     return degrees
+
 
 def print_degree_statistics(degrees):
     avg_degree = np.mean(degrees)
@@ -62,7 +120,7 @@ def print_degree_statistics(degrees):
     print(f"Maximum degree: {max_degree}")
 
 def main():
-    input_file = r'txtFiles\inputs\real_graphs\CA-GrQc.txt'
+    input_file = r'txtFiles/inputs/ABCommunityD/abcd_graph.txt'
 
     num_nodes, edges = read_graph(input_file)
 
@@ -72,6 +130,14 @@ def main():
 
     degrees = compute_degrees(num_nodes, edges)
     print_degree_statistics(degrees)
+
+    triangle_count = count_triangles(num_nodes, edges)
+    print("triangle_count:", triangle_count)
+
+    diameter = graph_diameter(num_nodes, edges)
+    print("diameter:", diameter)
+
+
 
 if __name__ == "__main__":
     main()
